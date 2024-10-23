@@ -17,6 +17,7 @@ from PIL import Image
 import diffusers
 from diffusers.utils import load_image
 from diffusers.models import ControlNetModel
+from diffusers.pipelines.controlnet.multicontrolnet import MultiControlNetModel
 from diffusers import LCMScheduler
 
 from huggingface_hub import hf_hub_download
@@ -26,6 +27,7 @@ from insightface.app import FaceAnalysis
 
 from pipeline_stable_diffusion_xl_instantid_full import StableDiffusionXLInstantIDPipeline
 from model_util import load_models_xl, get_torch_device, torch_gc
+from controlnet_util import openpose, get_depth_map, get_canny_image
 
 import gradio as gr
 
@@ -44,6 +46,37 @@ controlnet_path = f'./checkpoints/ControlNetModel'
 
 # Load pipeline
 controlnet = ControlNetModel.from_pretrained(controlnet_path, torch_dtype=dtype)
+
+# Load pipeline face ControlNetModel
+controlnet_identitynet = ControlNetModel.from_pretrained(
+    controlnet_path, torch_dtype=dtype
+)
+
+# controlnet-pose
+controlnet_pose_model = "thibaud/controlnet-openpose-sdxl-1.0"
+controlnet_canny_model = "diffusers/controlnet-canny-sdxl-1.0"
+controlnet_depth_model = "diffusers/controlnet-depth-sdxl-1.0-small"
+
+controlnet_pose = ControlNetModel.from_pretrained(
+    controlnet_pose_model, torch_dtype=dtype
+).to(device)
+controlnet_canny = ControlNetModel.from_pretrained(
+    controlnet_canny_model, torch_dtype=dtype
+).to(device)
+controlnet_depth = ControlNetModel.from_pretrained(
+    controlnet_depth_model, torch_dtype=dtype
+).to(device)
+
+controlnet_map = {
+    "pose": controlnet_pose,
+    "canny": controlnet_canny,
+    "depth": controlnet_depth,
+}
+controlnet_map_fn = {
+    "pose": openpose,
+    "canny": get_canny_image,
+    "depth": get_depth_map,
+}
 
 def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=False):
 
@@ -71,13 +104,13 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                 tokenizer_2=tokenizers[1],
                 unet=unet,
                 scheduler=scheduler,
-                controlnet=controlnet,
+                controlnet=[controlnet_identitynet], #** switch these to controlnet for old version
             ).to(device)
 
     else:
         pipe = StableDiffusionXLInstantIDPipeline.from_pretrained(
             pretrained_model_name_or_path,
-            controlnet=controlnet,
+            controlnet=[controlnet_identitynet],  #** switch these to controlnet for old version
             torch_dtype=dtype,
             safety_checker=None,
             feature_extractor=None,
@@ -241,6 +274,142 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
 
         return images[0], gr.update(visible=True)
 
+    def generate_image_multicontrolnet(
+        face_image_path,
+        pose_image_path,
+        prompt,
+        negative_prompt,
+        style_name,
+        num_steps,
+        identitynet_strength_ratio,
+        adapter_strength_ratio,
+        pose_strength,
+        canny_strength,
+        depth_strength,
+        controlnet_selection,
+        guidance_scale,
+        seed,
+        scheduler,
+        enable_LCM,
+        enhance_face_region,
+        progress=gr.Progress(track_tqdm=True),
+    ):
+
+        if enable_LCM:
+            pipe.scheduler = diffusers.LCMScheduler.from_config(pipe.scheduler.config)
+            pipe.enable_lora()
+        else:
+            pipe.disable_lora()
+            scheduler_class_name = scheduler.split("-")[0]
+
+            add_kwargs = {}
+            if len(scheduler.split("-")) > 1:
+                add_kwargs["use_karras_sigmas"] = True
+            if len(scheduler.split("-")) > 2:
+                add_kwargs["algorithm_type"] = "sde-dpmsolver++"
+            scheduler = getattr(diffusers, scheduler_class_name)
+            pipe.scheduler = scheduler.from_config(pipe.scheduler.config, **add_kwargs)
+
+        if face_image_path is None:
+            raise gr.Error(
+                f"Cannot find any input face image! Please upload the face image"
+            )
+
+        if prompt is None:
+            prompt = "a person"
+
+        # apply the style template
+        prompt, negative_prompt = apply_style(style_name, prompt, negative_prompt)
+
+        face_image = load_image(face_image_path)
+        face_image = resize_img(face_image, max_side=1024)
+        face_image_cv2 = convert_from_image_to_cv2(face_image)
+        height, width, _ = face_image_cv2.shape
+
+        # Extract face features
+        face_info = app.get(face_image_cv2)
+
+        if len(face_info) == 0:
+            raise gr.Error(
+                f"Unable to detect a face in the image. Please upload a different photo with a clear face."
+            )
+
+        face_info = sorted(face_info, key=lambda x:(x['bbox'][2]-x['bbox'][0])*(x['bbox'][3]-x['bbox'][1]))[-1]  # only use the maximum face
+        face_emb = face_info["embedding"]
+        face_kps = draw_kps(convert_from_cv2_to_image(face_image_cv2), face_info["kps"])
+        img_controlnet = face_image
+        if pose_image_path is not None:
+            pose_image = load_image(pose_image_path)
+            pose_image = resize_img(pose_image, max_side=1024)
+            img_controlnet = pose_image
+            pose_image_cv2 = convert_from_image_to_cv2(pose_image)
+
+            face_info = app.get(pose_image_cv2)
+
+            if len(face_info) == 0:
+                raise gr.Error(
+                    f"Cannot find any face in the reference image! Please upload another person image"
+                )
+
+            face_info = face_info[-1]
+            face_kps = draw_kps(pose_image, face_info["kps"])
+
+            width, height = face_kps.size
+
+        if enhance_face_region:
+            control_mask = np.zeros([height, width, 3])
+            x1, y1, x2, y2 = face_info["bbox"]
+            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+            control_mask[y1:y2, x1:x2] = 255
+            control_mask = Image.fromarray(control_mask.astype(np.uint8))
+        else:
+            control_mask = None
+
+        if len(controlnet_selection) > 0:
+            controlnet_scales = {
+                "pose": pose_strength,
+                "canny": canny_strength,
+                "depth": depth_strength,
+            }
+            pipe.controlnet = MultiControlNetModel(
+                [controlnet_identitynet]
+                + [controlnet_map[s] for s in controlnet_selection]
+            )
+            control_scales = [float(identitynet_strength_ratio)] + [
+                controlnet_scales[s] for s in controlnet_selection
+            ]
+            control_images = [face_kps] + [
+                controlnet_map_fn[s](img_controlnet).resize((width, height))
+                for s in controlnet_selection
+            ]
+        else:
+            pipe.controlnet = controlnet_identitynet
+            control_scales = float(identitynet_strength_ratio)
+            control_images = face_kps
+
+        generator = torch.Generator(device=device).manual_seed(seed)
+
+        print("Start inference...")
+        print(f"[Debug] Prompt: {prompt}, \n[Debug] Neg Prompt: {negative_prompt}")
+
+        pipe.set_ip_adapter_scale(adapter_strength_ratio)
+        images = pipe(
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            image_embeds=face_emb,
+            image=control_images,
+            control_mask=control_mask,
+            controlnet_conditioning_scale=control_scales,
+            num_inference_steps=num_steps,
+            guidance_scale=guidance_scale,
+            height=height,
+            width=width,
+            generator=generator,
+        ).images
+
+        return images[0], gr.update(visible=True)
+
+
     ### Description
     title = r"""
     <h1 align="center">InstantID: Zero-shot Identity-Preserving Generation in Seconds (YMBBT fork)</h1>
@@ -272,8 +441,10 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
     ### Usage tips of InstantID
     1. If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Adapter Strength."    
     2. If you feel that the saturation is too high, first decrease the Adapter strength. If it remains too high, then decrease the IdentityNet strength.
-    3. If you find that text control is not as expected, decrease Adapter strength.
-    4. If you find that realistic style is not good enough, go to the original Github repo and use a more realistic base model.
+    3. (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process.
+    4. Enter a text prompt, as done in normal text-to-image models.
+    5. Click the <b>Submit</b> button to begin customization.
+    6. If you find that realistic style is not good enough, go to the original Github repo and use a more realistic base model.
     """
 
     css = '''
@@ -301,6 +472,7 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                         value="")
                 
                 submit = gr.Button("Submit", variant="primary")
+                submit_multicontrolnet = gr.Button("Submit (w MultiControlNet)", variant="primary")
                 
                 enable_LCM = gr.Checkbox(
                     label="Enable Fast Inference with LCM", value=enable_lcm_arg,
@@ -322,7 +494,32 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                     step=0.05,
                     value=0.80,
                 )
-                
+                with gr.Accordion("Controlnet"):
+                    controlnet_selection = gr.CheckboxGroup(
+                        ["pose", "canny", "depth"], label="Controlnet", value=["pose"],
+                        info="Use pose for skeleton inference, canny for edge detection, and depth for depth map estimation. You can try all three to control the generation process"
+                    )
+                    pose_strength = gr.Slider(
+                        label="Pose strength",
+                        minimum=0,
+                        maximum=1.5,
+                        step=0.05,
+                        value=0.40,
+                    )
+                    canny_strength = gr.Slider(
+                        label="Canny strength",
+                        minimum=0,
+                        maximum=1.5,
+                        step=0.05,
+                        value=0.40,
+                    )
+                    depth_strength = gr.Slider(
+                        label="Depth strength",
+                        minimum=0,
+                        maximum=1.5,
+                        step=0.05,
+                        value=0.40,
+                    )
                 with gr.Accordion(open=False, label="Advanced Options"):
                     negative_prompt = gr.Textbox(
                         label="Negative Prompt", 
@@ -331,7 +528,7 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                     )
                     num_steps = gr.Slider( 
                         label="Number of sample steps",
-                        minimum=20,
+                        minimum=1,
                         maximum=100,
                         step=1,
                         value=5 if enable_lcm_arg else 30,
@@ -339,7 +536,7 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                     guidance_scale = gr.Slider(
                         label="Guidance scale",
                         minimum=0.1,
-                        maximum=10.0,
+                        maximum=20.0,
                         step=0.1,
                         value=0 if enable_lcm_arg else 5,
                     )
@@ -349,6 +546,19 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                         maximum=MAX_SEED,
                         step=1,
                         value=42,
+                    )
+                    schedulers = [
+                        "DEISMultistepScheduler",
+                        "HeunDiscreteScheduler",
+                        "EulerDiscreteScheduler",
+                        "DPMSolverMultistepScheduler",
+                        "DPMSolverMultistepScheduler-Karras",
+                        "DPMSolverMultistepScheduler-Karras-SDE",
+                    ]
+                    scheduler = gr.Dropdown(
+                        label="Schedulers",
+                        choices=schedulers,
+                        value="EulerDiscreteScheduler",
                     )
                     randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
                     enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
@@ -371,6 +581,38 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                 inputs=[face_file, pose_file, prompt, negative_prompt, num_steps, identitynet_strength_ratio, adapter_strength_ratio, guidance_scale, seed, enable_LCM, enhance_face_region],
                 outputs=[gallery, usage_tips]
             ) 
+            
+            submit_multicontrolnet.click(
+                fn=remove_tips,
+                outputs=usage_tips,
+            ).then(
+                fn=randomize_seed_fn,
+                inputs=[seed, randomize_seed],
+                outputs=seed,
+                queue=False,
+                api_name=False,
+            ).then(
+                fn=generate_image_multicontrolnet,
+                inputs=[
+                    face_file,
+                    pose_file,
+                    prompt,
+                    negative_prompt,
+                    num_steps,
+                    identitynet_strength_ratio,
+                    adapter_strength_ratio,
+                    pose_strength,
+                    canny_strength,
+                    depth_strength,
+                    controlnet_selection,
+                    guidance_scale,
+                    seed,
+                    scheduler,
+                    enable_LCM,
+                    enhance_face_region,
+                ],
+                outputs=[gallery, usage_tips],
+            )
             
             enable_LCM.input(fn=toggle_lcm_ui, inputs=[enable_LCM], outputs=[num_steps, guidance_scale], queue=False)
         
