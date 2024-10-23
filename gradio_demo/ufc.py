@@ -222,7 +222,7 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
         generator = torch.Generator(device=device).manual_seed(seed)
         
         print("Start inference...")
-        print(f"[Debug] Prompt: {prompt}, \n[Debug] Neg Prompt: {negative_prompt}")
+        print(f"[Debug] Prompt: {prompt} \n[Debug] Neg Prompt: {negative_prompt}")
         
         pipe.set_ip_adapter_scale(adapter_strength_ratio)
         images = pipe(
