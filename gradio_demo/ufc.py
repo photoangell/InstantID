@@ -376,14 +376,15 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
             ).then(
                 fn=generate_image,
                 inputs=[face_file, pose_file, prompt, negative_prompt, num_steps, identitynet_strength_ratio, adapter_strength_ratio, guidance_scale, seed, enable_LCM, enhance_face_region],
-                outputs=[gallery, usage_tips]
-            )
-        
+                outputs=[gallery, usage_tips],
+                queue=True  # Enable queuing for image generation
+            ).queue(concurrency_count=5) 
+            
             enable_LCM.input(fn=toggle_lcm_ui, inputs=[enable_LCM], outputs=[num_steps, guidance_scale], queue=False)
         
         gr.Markdown(article)
 
-    demo.launch(share=True, concurrency_count=10)
+    demo.launch(share=True)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
