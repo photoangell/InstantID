@@ -104,13 +104,13 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                 tokenizer_2=tokenizers[1],
                 unet=unet,
                 scheduler=scheduler,
-                controlnet=[controlnet_identitynet], #** switch these to controlnet for old version
+                controlnet=controlnet #[controlnet_identitynet], #** switch these to controlnet for old version
             ).to(device)
 
     else:
         pipe = StableDiffusionXLInstantIDPipeline.from_pretrained(
             pretrained_model_name_or_path,
-            controlnet=[controlnet_identitynet],  #** switch these to controlnet for old version
+            controlnet=controlnet #[controlnet_identitynet],  #** switch these to controlnet for old version
             torch_dtype=dtype,
             safety_checker=None,
             feature_extractor=None,
