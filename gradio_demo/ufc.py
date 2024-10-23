@@ -24,7 +24,6 @@ from huggingface_hub import hf_hub_download
 import insightface
 from insightface.app import FaceAnalysis
 
-from style_template import styles
 from pipeline_stable_diffusion_xl_instantid_full import StableDiffusionXLInstantIDPipeline
 from model_util import load_models_xl, get_torch_device, torch_gc
 
@@ -34,8 +33,6 @@ import gradio as gr
 MAX_SEED = np.iinfo(np.int32).max
 device = get_torch_device()
 dtype = torch.float16 if str(device).__contains__("cuda") else torch.float32
-STYLE_NAMES = list(styles.keys())
-DEFAULT_STYLE_NAME = "Watercolor"
 
 # Load face encoder
 app = FaceAnalysis(name='antelopev2', root='./', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
@@ -169,11 +166,7 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                 input_image = Image.fromarray(res)
             return input_image
 
-    def apply_style(style_name: str, positive: str, negative: str = "") -> Tuple[str, str]:
-        p, n = styles.get(style_name, styles[DEFAULT_STYLE_NAME])
-        return p.replace("{prompt}", positive), n + ' ' + negative
-
-    def generate_image(face_image_path, pose_image_path, prompt, negative_prompt, style_name, num_steps, identitynet_strength_ratio, adapter_strength_ratio, guidance_scale, seed, enable_LCM, enhance_face_region, progress=gr.Progress(track_tqdm=True)):
+    def generate_image(face_image_path, pose_image_path, prompt, negative_prompt, num_steps, identitynet_strength_ratio, adapter_strength_ratio, guidance_scale, seed, enable_LCM, enhance_face_region, progress=gr.Progress(track_tqdm=True)):
         if enable_LCM:
             pipe.enable_lora()
             pipe.scheduler = LCMScheduler.from_config(pipe.scheduler.config)
@@ -186,9 +179,6 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
         
         if prompt is None:
             prompt = "a person"
-        
-        # apply the style template
-        prompt, negative_prompt = apply_style(style_name, prompt, negative_prompt)
         
         face_image = load_image(face_image_path)
         face_image = resize_img(face_image)
@@ -323,7 +313,6 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                     label="Enable Fast Inference with LCM", value=enable_lcm_arg,
                     info="LCM speeds up the inference step, the trade-off is the quality of the generated image. It performs better with portrait face images rather than distant faces",
                 )
-                style = gr.Dropdown(label="Style template", choices=STYLE_NAMES, value=DEFAULT_STYLE_NAME)
                 
                 # strength
                 identitynet_strength_ratio = gr.Slider(
@@ -386,7 +375,7 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                 api_name=False,
             ).then(
                 fn=generate_image,
-                inputs=[face_file, pose_file, prompt, negative_prompt, style, num_steps, identitynet_strength_ratio, adapter_strength_ratio, guidance_scale, seed, enable_LCM, enhance_face_region],
+                inputs=[face_file, pose_file, prompt, negative_prompt, num_steps, identitynet_strength_ratio, adapter_strength_ratio, guidance_scale, seed, enable_LCM, enhance_face_region],
                 outputs=[gallery, usage_tips]
             )
         
