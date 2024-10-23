@@ -383,7 +383,7 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
         
         gr.Markdown(article)
 
-    demo.queue(concurrency_count=5).launch(share=True)
+    demo.launch(share=True)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
