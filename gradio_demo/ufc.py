@@ -279,7 +279,6 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
         pose_image_path,
         prompt,
         negative_prompt,
-        style_name,
         num_steps,
         identitynet_strength_ratio,
         adapter_strength_ratio,
@@ -317,9 +316,6 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
 
         if prompt is None:
             prompt = "a person"
-
-        # apply the style template
-        prompt, negative_prompt = apply_style(style_name, prompt, negative_prompt)
 
         face_image = load_image(face_image_path)
         face_image = resize_img(face_image, max_side=1024)
