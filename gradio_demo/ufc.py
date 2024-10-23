@@ -286,103 +286,104 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
     css = '''
     .gradio-container {width: 85% !important}
     '''
+    with gr.Blocks(css=css) as demo:
 
-    # Define all the functions you had in the Blocks version
-    def remove_tips():
-        return ""
+        # description
+        gr.Markdown(title)
+        gr.Markdown(description)
 
-    def randomize_seed_fn(seed, randomize_seed):
-        if randomize_seed:
-            import random
-            seed = random.randint(0, 10000)
-        return seed
+        with gr.Row():
+            with gr.Column():
+                
+                # upload face image
+                face_file = gr.Image(label="Upload a photo of your face", type="filepath")
 
-    def generate_image(face_file, pose_file, prompt, negative_prompt, num_steps, identitynet_strength_ratio, adapter_strength_ratio, guidance_scale, seed, enable_LCM, enhance_face_region):
-        # Simulate image generation logic here
-        # For now, just return a dummy image (you would use your actual image generation logic)
-        from PIL import Image
-        img = Image.new('RGB', (256, 256), color = (73, 109, 137))
-        return img, "Usage tips: Make sure your face is clearly visible and well-lit for best results."
+                # optional: upload a reference pose image
+                pose_file = gr.Image(label="Upload a reference pose image (optional)", type="filepath")
+           
+                # prompt
+                prompt = gr.Textbox(label="Prompt",
+                        info="Give simple prompt is enough to achieve good face fidelity",
+                        placeholder="A photo of a person",
+                        value="")
+                
+                submit = gr.Button("Submit", variant="primary")
+                
+                enable_LCM = gr.Checkbox(
+                    label="Enable Fast Inference with LCM", value=enable_lcm_arg,
+                    info="LCM speeds up the inference step, the trade-off is the quality of the generated image. It performs better with portrait face images rather than distant faces",
+                )
+                
+                # strength
+                identitynet_strength_ratio = gr.Slider(
+                    label="IdentityNet strength (for fidelity)",
+                    minimum=0,
+                    maximum=1.5,
+                    step=0.05,
+                    value=0.80,
+                )
+                adapter_strength_ratio = gr.Slider(
+                    label="Image adapter strength (for detail)",
+                    minimum=0,
+                    maximum=1.5,
+                    step=0.05,
+                    value=0.80,
+                )
+                
+                with gr.Accordion(open=False, label="Advanced Options"):
+                    negative_prompt = gr.Textbox(
+                        label="Negative Prompt", 
+                        placeholder="low quality",
+                        value="(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
+                    )
+                    num_steps = gr.Slider( 
+                        label="Number of sample steps",
+                        minimum=20,
+                        maximum=100,
+                        step=1,
+                        value=5 if enable_lcm_arg else 30,
+                    )
+                    guidance_scale = gr.Slider(
+                        label="Guidance scale",
+                        minimum=0.1,
+                        maximum=10.0,
+                        step=0.1,
+                        value=0 if enable_lcm_arg else 5,
+                    )
+                    seed = gr.Slider(
+                        label="Seed",
+                        minimum=0,
+                        maximum=MAX_SEED,
+                        step=1,
+                        value=42,
+                    )
+                    randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
+                    enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
 
-    def toggle_lcm_ui(enable_LCM):
-        if enable_LCM:
-            return 5, 0
-        else:
-            return 30, 5
+            with gr.Column():
+                gallery = gr.Image(label="Generated Images")
+                usage_tips = gr.Markdown(label="Usage tips of InstantID", value=tips ,visible=False)
 
-    # Initial values and constants
-    enable_lcm_arg = False  # Set based on your original argument logic
-    MAX_SEED = 10000
-    title = "# Image Processing App"
-    description = "Upload a face image, adjust options, and generate an output image."
-    tips = "Usage tips: Ensure your face is clear and well-lit for the best results."
+            submit.click(
+                fn=remove_tips,
+                outputs=usage_tips,            
+            ).then(
+                fn=randomize_seed_fn,
+                inputs=[seed, randomize_seed],
+                outputs=seed,
+                queue=False,
+                api_name=False,
+            ).then(
+                fn=generate_image,
+                inputs=[face_file, pose_file, prompt, negative_prompt, num_steps, identitynet_strength_ratio, adapter_strength_ratio, guidance_scale, seed, enable_LCM, enhance_face_region],
+                outputs=[gallery, usage_tips]
+            )
+        
+            enable_LCM.input(fn=toggle_lcm_ui, inputs=[enable_LCM], outputs=[num_steps, guidance_scale], queue=False)
+        
+        gr.Markdown(article)
 
-    # Create the Interface
-    iface = gr.Interface(
-        fn=generate_image,  # The main function that processes images
-        inputs=[
-            gr.Image(label="Upload a photo of your face", type="filepath"),  # face_file
-            gr.Image(label="Upload a reference pose image (optional)", type="filepath"),  # pose_file
-            gr.Textbox(
-                label="Prompt",
-                info="Give simple prompt is enough to achieve good face fidelity",
-                placeholder="A photo of a person",
-                value=""
-            ),  # prompt
-            gr.Textbox(
-                label="Negative Prompt", 
-                placeholder="low quality",
-                value="(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green"
-            ),  # negative_prompt
-            gr.Slider( 
-                label="Number of sample steps",
-                minimum=20,
-                maximum=100,
-                step=1,
-                value=5 if enable_lcm_arg else 30
-            ),  # num_steps
-            gr.Slider(
-                label="IdentityNet strength (for fidelity)",
-                minimum=0,
-                maximum=1.5,
-                step=0.05,
-                value=0.80
-            ),  # identitynet_strength_ratio
-            gr.Slider(
-                label="Image adapter strength (for detail)",
-                minimum=0,
-                maximum=1.5,
-                step=0.05,
-                value=0.80
-            ),  # adapter_strength_ratio
-            gr.Slider(
-                label="Guidance scale",
-                minimum=0.1,
-                maximum=10.0,
-                step=0.1,
-                value=0 if enable_lcm_arg else 5
-            ),  # guidance_scale
-            gr.Slider(
-                label="Seed",
-                minimum=0,
-                maximum=MAX_SEED,
-                step=1,
-                value=42
-            ),  # seed
-            gr.Checkbox(label="Enable Fast Inference with LCM", value=enable_lcm_arg),  # enable_LCM
-            gr.Checkbox(label="Enhance non-face region", value=True)  # enhance_face_region
-        ],
-        outputs=[
-            gr.Image(label="Generated Images"),  # gallery
-            gr.Markdown(label="Usage tips of InstantID", visible=True)  # usage_tips
-        ],
-        title=title,
-        description=description
-    )
-
-    # Launch the interface with shareable link and concurrency count
-    iface.launch(share=True, concurrency_count=10)
-
+    demo.launch(share=True, concurrency_count=10)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
