@@ -243,25 +243,18 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
 
     ### Description
     title = r"""
-    <h1 align="center">InstantID: Zero-shot Identity-Preserving Generation in Seconds</h1>
+    <h1 align="center">InstantID: Zero-shot Identity-Preserving Generation in Seconds (YMBBT fork)</h1>
     """
 
     description = r"""
-    <b>Official 🤗 Gradio demo</b> for <a href='https://github.com/InstantID/InstantID' target='_blank'><b>InstantID: Zero-shot Identity-Preserving Generation in Seconds</b></a>.<br>
-
-    How to use:<br>
-    1. Upload an image with a face. For images with multiple faces, we will only detect the largest face. Ensure the face is not too small and is clearly visible without significant obstructions or blurring.
-    2. (Optional) You can upload another image as a reference for the face pose. If you don't, we will use the first detected face image to extract facial landmarks. If you use a cropped face at step 1, it is recommended to upload it to define a new face pose.
-    3. Enter a text prompt, as done in normal text-to-image models.
-    4. Click the <b>Submit</b> button to begin customization.
-    5. Share your customized photo with your friends and enjoy! 😊
+    <b><a href='https://github.com/photoangell/InstantID' target='_blank'>Forked repo</a> for use in the UFC scene of YMBBT 2024</b>.
     """
 
     article = r"""
     ---
     📝 **Citation**
     <br>
-    If our work is helpful for your research or applications, please cite us via:
+    If our work is helpful for your research or applications, please cite original authors via:
     ```bibtex
     @article{wang2024instantid,
     title={InstantID: Zero-shot Identity-Preserving Generation in Seconds},
@@ -280,7 +273,7 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
     1. If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Adapter Strength."    
     2. If you feel that the saturation is too high, first decrease the Adapter strength. If it remains too high, then decrease the IdentityNet strength.
     3. If you find that text control is not as expected, decrease Adapter strength.
-    4. If you find that realistic style is not good enough, go for our Github repo and use a more realistic base model.
+    4. If you find that realistic style is not good enough, go to the original Github repo and use a more realistic base model.
     """
 
     css = '''
