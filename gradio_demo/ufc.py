@@ -293,7 +293,7 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
         enhance_face_region,
         progress=gr.Progress(track_tqdm=True),
     ):
-
+        # LCM setup
         if enable_LCM:
             pipe.scheduler = diffusers.LCMScheduler.from_config(pipe.scheduler.config)
             pipe.enable_lora()
@@ -309,6 +309,7 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
             scheduler = getattr(diffusers, scheduler_class_name)
             pipe.scheduler = scheduler.from_config(pipe.scheduler.config, **add_kwargs)
 
+        # Load and process face image; ensure it's moved to device
         if face_image_path is None:
             raise gr.Error(
                 f"Cannot find any input face image! Please upload the face image"
