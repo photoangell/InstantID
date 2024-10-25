@@ -18,7 +18,32 @@ def download_checkpoint(repo_id, filename, local_dir):
             local_dir_use_symlinks=False  # Ensure actual file download, no symlink
         )
         print(f"Downloaded {filename} to {local_dir}")
-
+def git_clone_or_pull(repo_url, repo_dir):
+    """
+    Clones the repository if it does not exist, or performs a git pull if it does.
+    
+    :param repo_url: URL of the git repository to clone or pull
+    :param repo_dir: Directory where the repo should be cloned or updated
+    """
+    # Check if the directory exists and is a git repository
+    if os.path.isdir(repo_dir):
+        # If the directory is a git repository, do a pull
+        if os.path.isdir(os.path.join(repo_dir, '.git')):
+            print(f"Directory {repo_dir} exists. Pulling latest changes.")
+            try:
+                subprocess.run(["git", "-C", repo_dir, "pull"], check=True)
+            except subprocess.CalledProcessError as e:
+                print(f"Failed to pull repository: {e}")
+        else:
+            print(f"Directory {repo_dir} exists but is not a git repository.")
+    else:
+        # Clone the repository if it doesn't exist
+        print(f"Cloning repository into {repo_dir}")
+        try:
+            subprocess.run(["git", "clone", repo_url, repo_dir], check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to clone repository: {e}") 
+            
 # Download ControlNetModel config
 download_checkpoint(
     repo_id="InstantX/InstantID",
@@ -47,9 +72,8 @@ download_checkpoint(
     local_dir="./checkpoints"
 )
 
-# Ensure the models directory exists
-models_dir = "./models"
-os.makedirs(models_dir, exist_ok=True)
-
-# Clone the repository into the models directory
-subprocess.run(["git", "clone", "https://huggingface.co/DIAMONIK7777/antelopev2", models_dir], check=True)
+# Clone the antelopev2 model repository
+git_clone_or_pull(
+    repo_url="https://huggingface.co/DIAMONIK7777/antelopev2", 
+    repo_dir="./models/antelopev2"
+)
