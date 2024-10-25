@@ -14,10 +14,10 @@ def download_checkpoint(repo_id, filename, local_dir):
         hf_hub_download(
             repo_id=repo_id,
             filename=filename,
-            local_dir=local_dir,
-            local_dir_use_symlinks=False  # Ensure actual file download, no symlink
+            local_dir=local_dir
         )
         print(f"Downloaded {filename} to {local_dir}")
+        
 def git_clone_or_pull(repo_url, repo_dir):
     """
     Clones the repository if it does not exist, or performs a git pull if it does.
