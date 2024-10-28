@@ -430,14 +430,14 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
         
             enable_LCM.input(fn=toggle_lcm_ui, inputs=[enable_LCM], outputs=[num_steps, guidance_scale], queue=False)
 
-        # gr.Examples(
-        #     examples=get_example(),
-        #     inputs=[face_file, prompt, style, negative_prompt],
-        #     run_on_click=True,
-        #     fn=run_for_examples,
-        #     outputs=[gallery, usage_tips],
-        #     cache_examples=True,
-        # )
+        gr.Examples(
+            examples=get_example(),
+            inputs=[face_file, prompt, style, negative_prompt],
+            run_on_click=True,
+            fn=run_for_examples,
+            outputs=[gallery, usage_tips],
+            cache_examples=True,
+        )
         
         gr.Markdown(article)
 

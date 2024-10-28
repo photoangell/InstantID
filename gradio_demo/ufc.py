@@ -323,37 +323,33 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
         face_image_cv2 = convert_from_image_to_cv2(face_image)
         height, width, _ = face_image_cv2.shape
 
-        # Convert face_image_cv2 to tensor and move to GPU
-        face_image_cv2_tensor = torch.tensor(face_image_cv2).to(device)
+        # Extract face features
+        face_info = app.get(face_image_cv2)
 
-        # Extract face features and move them to GPU
-        face_info = app.get(face_image_cv2_tensor)
         if len(face_info) == 0:
             raise gr.Error(
                 f"Unable to detect a face in the image. Please upload a different photo with a clear face."
             )
 
-        face_info = sorted(face_info, key=lambda x: (x['bbox'][2] - x['bbox'][0]) * (x['bbox'][3] - x['bbox'][1]))[-1]
-        face_emb = torch.tensor(face_info["embedding"]).to(device)
-        face_kps = draw_kps(convert_from_cv2_to_image(face_image_cv2), face_info["kps"]).to(device)
-
-        # If a pose image is provided, load and process it
-        img_controlnet = face_image  # Default for controlnet conditioning
+        face_info = sorted(face_info, key=lambda x:(x['bbox'][2]-x['bbox'][0])*(x['bbox'][3]-x['bbox'][1]))[-1]  # only use the maximum face
+        face_emb = face_info["embedding"]
+        face_kps = draw_kps(convert_from_cv2_to_image(face_image_cv2), face_info["kps"])
+        img_controlnet = face_image
         if pose_image_path is not None:
             pose_image = load_image(pose_image_path)
             pose_image = resize_img(pose_image, max_side=1024)
             img_controlnet = pose_image
             pose_image_cv2 = convert_from_image_to_cv2(pose_image)
 
-            # Convert pose_image_cv2 to tensor and move to GPU
-            pose_image_cv2_tensor = torch.tensor(pose_image_cv2).to(device)
+            face_info = app.get(pose_image_cv2)
 
-            face_info = app.get(pose_image_cv2_tensor)
             if len(face_info) == 0:
-                raise gr.Error("Cannot find any face in the reference image! Please upload another person image")
+                raise gr.Error(
+                    f"Cannot find any face in the reference image! Please upload another person image"
+                )
 
             face_info = face_info[-1]
-            face_kps = draw_kps(pose_image, face_info["kps"]).to(device)
+            face_kps = draw_kps(pose_image, face_info["kps"])
 
             width, height = face_kps.size
 
@@ -362,7 +358,7 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
             x1, y1, x2, y2 = face_info["bbox"]
             x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
             control_mask[y1:y2, x1:x2] = 255
-            control_mask = torch.tensor(control_mask).to(device)
+            control_mask = Image.fromarray(control_mask.astype(np.uint8))
         else:
             control_mask = None
 
@@ -373,17 +369,18 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                 "depth": depth_strength,
             }
             pipe.controlnet = MultiControlNetModel(
-                [controlnet_identitynet] + [controlnet_map[s].to(device) for s in controlnet_selection]
+                [controlnet_identitynet]
+                + [controlnet_map[s] for s in controlnet_selection]
             )
             control_scales = [float(identitynet_strength_ratio)] + [
                 controlnet_scales[s] for s in controlnet_selection
             ]
             control_images = [face_kps] + [
-                controlnet_map_fn[s](img_controlnet).resize((width, height)).to(device)
+                controlnet_map_fn[s](img_controlnet).resize((width, height))
                 for s in controlnet_selection
             ]
         else:
-            pipe.controlnet = controlnet_identitynet.to(device)
+            pipe.controlnet = controlnet_identitynet
             control_scales = float(identitynet_strength_ratio)
             control_images = face_kps
 
