@@ -32,7 +32,7 @@ jobs:
           ${{ runner.os }}-buildx-
 
     # Step 4: Log in to Docker Hub
-    - name: Log in to Docker Hub
+    - name: Log in to Docker Hu b
       uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}   # Docker Hub username stored as a secret
