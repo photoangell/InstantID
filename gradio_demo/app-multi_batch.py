@@ -1,10 +1,7 @@
 ### Eric: I'm going to use this version to troubleshoot getting it up and running. 
 # rip out styles and examples
 
-
-# Changes
-#   removed examples
-#   set default style to No Style
+# appended rudimentary batch process
 
 import sys
 sys.path.append("./")
@@ -438,241 +435,331 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
             generator=generator,
         ).images
 
-        return images[0], gr.update(visible=True)
+        return images[0] #, gr.update(visible=True)
 
-    # Description
-    title = r"""
-    <h1 align="center">InstantID: Zero-shot Identity-Preserving Generation in Seconds</h1>
-    """
 
-    description = r"""
-    <b>Official 🤗 Gradio demo</b> for <a href='https://github.com/InstantID/InstantID' target='_blank'><b>InstantID: Zero-shot Identity-Preserving Generation in Seconds</b></a>.<br>
+print('Pipeline built...')
+print('Running batch built...')
 
-    How to use:<br>
-    1. Upload an image with a face. For images with multiple faces, we will only detect the largest face. Ensure the face is not too small and is clearly visible without significant obstructions or blurring.
-    2. (Optional) You can upload another image as a reference for the face pose. If you don't, we will use the first detected face image to extract facial landmarks. If you use a cropped face at step 1, it is recommended to upload it to define a new face pose.
-    3. (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process.
-    4. Enter a text prompt, as done in normal text-to-image models.
-    5. Click the <b>Submit</b> button to begin customization.
-    6. Share your customized photo with your friends and enjoy! 😊"""
+from pathlib import Path
+# Set all parameters that generate_image will use, (stored in a python dictionary)
 
-    article = r"""
-    ---
-    📝 **Citation**
-    <br>
-    If our work is helpful for your research or applications, please cite us via:
-    ```bibtex
-    @article{wang2024instantid,
-    title={InstantID: Zero-shot Identity-Preserving Generation in Seconds},
-    author={Wang, Qixun and Bai, Xu and Wang, Haofan and Qin, Zekui and Chen, Anthony},
-    journal={arXiv preprint arXiv:2401.07519},
-    year={2024}
+config = {
+    "passenger_dir": "/workspace/img/inputs/passenger",
+    "reference_dir": "/workspace/img/inputs/reference",
+    "output_dir": "/workspace/img/output",
+    "batch_name": "batch1",
+    "generate_image_params": {
+        "prompt": "",
+        "negative_prompt": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
+        "style_name": "",
+        "num_steps": 30,
+        "identitynet_strength_ratio": 0.8,
+        "adapter_strength_ratio": 0.8,
+        "guidance_scale": 5,
+        "seed": 42,
+        "enable_LCM": False,
+        "enhance_face_region": True
     }
-    ```
-    📧 **Contact**
-    <br>
-    If you have any questions, please feel free to open an issue or directly reach us out at <b>haofanwang.ai@gmail.com</b>.
-    """
+}
 
-    tips = r"""
-    ### Usage tips of InstantID
-    1. If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Adapter Strength."    
-    2. If you feel that the saturation is too high, first decrease the Adapter strength. If it remains too high, then decrease the IdentityNet strength.
-    3. If you find that text control is not as expected, decrease Adapter strength.
-    4. If you find that realistic style is not good enough, go for our Github repo and use a more realistic base model.
-    """
+def run_batch(config):
+    # read some of the params in config
+    passenger_dir = config['passenger_dir']
+    reference_dir = config['reference_dir']
+    output_dir = config['output_dir']
+    batch_name = config['batch_name']
+    generate_image_params = config['generate_image_params']
+    
+    # Paths and directories as before...
+    
+    # Set Paths for batch-specific folders
+    passenger_batch_dir = os.path.join(passenger_dir, batch_name)
+    reference_batch_dir = os.path.join(reference_dir, batch_name)
+    output_batch_dir = os.path.join(output_dir, batch_name)
 
-    css = """
-    .gradio-container {width: 85% !important}
-    """
-    with gr.Blocks(css=css) as demo:
-        # description
-        gr.Markdown(title)
-        gr.Markdown(description)
+    # Step 1: Check and create batch directories if they don't exist
+    Path(passenger_batch_dir).mkdir(parents=True, exist_ok=True)
+    Path(reference_batch_dir).mkdir(parents=True, exist_ok=True)
+    Path(output_batch_dir).mkdir(parents=True, exist_ok=True)
 
-        with gr.Row():
-            with gr.Column():
-                with gr.Row(equal_height=True):
-                    # upload face image
-                    face_file = gr.Image(
-                        label="Upload a photo of your face", type="filepath"
-                    )
-                    # optional: upload a reference pose image
-                    pose_file = gr.Image(
-                        label="Upload a reference pose image (Optional)",
-                        type="filepath",
-                    )
+    # Step 2: Generate images and save details
+    output_info = []  # Store info for the text file
 
-                # prompt
-                prompt = gr.Textbox(
-                    label="Prompt",
-                    info="Give simple prompt is enough to achieve good face fidelity",
-                    placeholder="A photo of a person",
-                    value="",
-                )
+    # Loop through each passenger image
+    passenger_images = sorted(Path(passenger_dir).glob('*'))
+    reference_images = sorted(Path(reference_dir).glob('*'))
 
-                submit = gr.Button("Submit", variant="primary")
-                enable_LCM = gr.Checkbox(
-                    label="Enable Fast Inference with LCM", value=enable_lcm_arg,
-                    info="LCM speeds up the inference step, the trade-off is the quality of the generated image. It performs better with portrait face images rather than distant faces",
-                )
-                style = gr.Dropdown(
-                    label="Style template",
-                    choices=STYLE_NAMES,
-                    value=DEFAULT_STYLE_NAME,
-                )
+    # Ensure there are passenger and reference images
+    if not passenger_images or not reference_images:
+        raise ValueError("Ensure both passenger and reference directories contain images.")
 
-                # strength
-                identitynet_strength_ratio = gr.Slider(
-                    label="IdentityNet strength (for fidelity)",
-                    minimum=0,
-                    maximum=1.5,
-                    step=0.05,
-                    value=0.80,
-                )
-                adapter_strength_ratio = gr.Slider(
-                    label="Image adapter strength (for detail)",
-                    minimum=0,
-                    maximum=1.5,
-                    step=0.05,
-                    value=0.80,
-                )
-                with gr.Accordion("Controlnet"):
-                    controlnet_selection = gr.CheckboxGroup(
-                        ["pose", "canny", "depth"], label="Controlnet", value=["pose"],
-                        info="Use pose for skeleton inference, canny for edge detection, and depth for depth map estimation. You can try all three to control the generation process"
-                    )
-                    pose_strength = gr.Slider(
-                        label="Pose strength",
-                        minimum=0,
-                        maximum=1.5,
-                        step=0.05,
-                        value=0.40,
-                    )
-                    canny_strength = gr.Slider(
-                        label="Canny strength",
-                        minimum=0,
-                        maximum=1.5,
-                        step=0.05,
-                        value=0.40,
-                    )
-                    depth_strength = gr.Slider(
-                        label="Depth strength",
-                        minimum=0,
-                        maximum=1.5,
-                        step=0.05,
-                        value=0.40,
-                    )
-                with gr.Accordion(open=False, label="Advanced Options"):
-                    negative_prompt = gr.Textbox(
-                        label="Negative Prompt",
-                        placeholder="low quality",
-                        value="(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
-                    )
-                    num_steps = gr.Slider(
-                        label="Number of sample steps",
-                        minimum=1,
-                        maximum=100,
-                        step=1,
-                        value=5 if enable_lcm_arg else 30,
-                    )
-                    guidance_scale = gr.Slider(
-                        label="Guidance scale",
-                        minimum=0.1,
-                        maximum=20.0,
-                        step=0.1,
-                        value=0.0 if enable_lcm_arg else 5.0,
-                    )
-                    seed = gr.Slider(
-                        label="Seed",
-                        minimum=0,
-                        maximum=MAX_SEED,
-                        step=1,
-                        value=42,
-                    )
-                    schedulers = [
-                        "DEISMultistepScheduler",
-                        "HeunDiscreteScheduler",
-                        "EulerDiscreteScheduler",
-                        "DPMSolverMultistepScheduler",
-                        "DPMSolverMultistepScheduler-Karras",
-                        "DPMSolverMultistepScheduler-Karras-SDE",
-                    ]
-                    scheduler = gr.Dropdown(
-                        label="Schedulers",
-                        choices=schedulers,
-                        value="EulerDiscreteScheduler",
-                    )
-                    randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
-                    enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
-
-            with gr.Column(scale=1):
-                gallery = gr.Image(label="Generated Images")
-                usage_tips = gr.Markdown(
-                    label="InstantID Usage Tips", value=tips, visible=False
-                )
-
-            submit.click(
-                fn=remove_tips,
-                outputs=usage_tips,
-            ).then(
-                fn=randomize_seed_fn,
-                inputs=[seed, randomize_seed],
-                outputs=seed,
-                queue=False,
-                api_name=False,
-            ).then(
-                fn=generate_image,
-                inputs=[
-                    face_file,
-                    pose_file,
-                    prompt,
-                    negative_prompt,
-                    style,
-                    num_steps,
-                    identitynet_strength_ratio,
-                    adapter_strength_ratio,
-                    pose_strength,
-                    canny_strength,
-                    depth_strength,
-                    controlnet_selection,
-                    guidance_scale,
-                    seed,
-                    scheduler,
-                    enable_LCM,
-                    enhance_face_region,
-                ],
-                outputs=[gallery, usage_tips],
+    image_index = 1
+    for passenger_image in passenger_images:
+        for reference_image in reference_images:
+            # Generate image using unpacked parameters
+            generated_image = generate_image(
+                face_image_path=passenger_image,
+                pose_image_path=reference_image,
+                **generate_image_params
             )
 
-            enable_LCM.input(
-                fn=toggle_lcm_ui,
-                inputs=[enable_LCM],
-                outputs=[num_steps, guidance_scale],
-                queue=False,
-            )
+            # Step 3: Write the input and output image names plus the params used
+            image.save(f"{output_batch_dir}{image_index}.jpg")
+            log_file_path = os.path.join(output_batch_dir, f"{image_index}.txt")
+            with open(log_file_path, 'w') as log_file:
+                for info in output_info:
+                    log_file.write(f"Passenger File: {info['passenger_file']}\n")
+                    log_file.write(f"Reference File: {info['reference_file']}\n")
+                    log_file.write(f"Output File: {info['output_file']}\n")
+                    log_file.write(f"Parameters: param1={info['param1']}, param2={info['param2']}\n")
+                    log_file.write("\n---\n\n")
 
-        # gr.Examples(
-        #     examples=get_example(),
-        #     inputs=[face_file, pose_file, prompt, style, negative_prompt],
-        #     fn=run_for_examples,
-        #     outputs=[gallery, usage_tips],
-        #     cache_examples=True,
-        # )
-
-        gr.Markdown(article)
-
-    demo.launch(share=True)
+            image_index += 1
+            
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--pretrained_model_name_or_path", type=str, default="wangqixun/YamerMIX_v8"
-    )
-    parser.add_argument(
-        "--enable_LCM", type=bool, default=os.environ.get("ENABLE_LCM", False)
-    )
-    args = parser.parse_args()
 
-    main(args.pretrained_model_name_or_path, args.enable_LCM)
+
+
+
+
+
+
+
+#     # Description
+#     title = r"""
+#     <h1 align="center">InstantID: Zero-shot Identity-Preserving Generation in Seconds</h1>
+#     """
+
+#     description = r"""
+#     <b>Official 🤗 Gradio demo</b> for <a href='https://github.com/InstantID/InstantID' target='_blank'><b>InstantID: Zero-shot Identity-Preserving Generation in Seconds</b></a>.<br>
+
+#     How to use:<br>
+#     1. Upload an image with a face. For images with multiple faces, we will only detect the largest face. Ensure the face is not too small and is clearly visible without significant obstructions or blurring.
+#     2. (Optional) You can upload another image as a reference for the face pose. If you don't, we will use the first detected face image to extract facial landmarks. If you use a cropped face at step 1, it is recommended to upload it to define a new face pose.
+#     3. (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process.
+#     4. Enter a text prompt, as done in normal text-to-image models.
+#     5. Click the <b>Submit</b> button to begin customization.
+#     6. Share your customized photo with your friends and enjoy! 😊"""
+
+#     article = r"""
+#     ---
+#     📝 **Citation**
+#     <br>
+#     If our work is helpful for your research or applications, please cite us via:
+#     ```bibtex
+#     @article{wang2024instantid,
+#     title={InstantID: Zero-shot Identity-Preserving Generation in Seconds},
+#     author={Wang, Qixun and Bai, Xu and Wang, Haofan and Qin, Zekui and Chen, Anthony},
+#     journal={arXiv preprint arXiv:2401.07519},
+#     year={2024}
+#     }
+#     ```
+#     📧 **Contact**
+#     <br>
+#     If you have any questions, please feel free to open an issue or directly reach us out at <b>haofanwang.ai@gmail.com</b>.
+#     """
+
+#     tips = r"""
+#     ### Usage tips of InstantID
+#     1. If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Adapter Strength."    
+#     2. If you feel that the saturation is too high, first decrease the Adapter strength. If it remains too high, then decrease the IdentityNet strength.
+#     3. If you find that text control is not as expected, decrease Adapter strength.
+#     4. If you find that realistic style is not good enough, go for our Github repo and use a more realistic base model.
+#     """
+
+#     css = """
+#     .gradio-container {width: 85% !important}
+#     """
+#     with gr.Blocks(css=css) as demo:
+#         # description
+#         gr.Markdown(title)
+#         gr.Markdown(description)
+
+#         with gr.Row():
+#             with gr.Column():
+#                 with gr.Row(equal_height=True):
+#                     # upload face image
+#                     face_file = gr.Image(
+#                         label="Upload a photo of your face", type="filepath"
+#                     )
+#                     # optional: upload a reference pose image
+#                     pose_file = gr.Image(
+#                         label="Upload a reference pose image (Optional)",
+#                         type="filepath",
+#                     )
+
+#                 # prompt
+#                 prompt = gr.Textbox(
+#                     label="Prompt",
+#                     info="Give simple prompt is enough to achieve good face fidelity",
+#                     placeholder="A photo of a person",
+#                     value="",
+#                 )
+
+#                 submit = gr.Button("Submit", variant="primary")
+#                 enable_LCM = gr.Checkbox(
+#                     label="Enable Fast Inference with LCM", value=enable_lcm_arg,
+#                     info="LCM speeds up the inference step, the trade-off is the quality of the generated image. It performs better with portrait face images rather than distant faces",
+#                 )
+#                 style = gr.Dropdown(
+#                     label="Style template",
+#                     choices=STYLE_NAMES,
+#                     value=DEFAULT_STYLE_NAME,
+#                 )
+
+#                 # strength
+#                 identitynet_strength_ratio = gr.Slider(
+#                     label="IdentityNet strength (for fidelity)",
+#                     minimum=0,
+#                     maximum=1.5,
+#                     step=0.05,
+#                     value=0.80,
+#                 )
+#                 adapter_strength_ratio = gr.Slider(
+#                     label="Image adapter strength (for detail)",
+#                     minimum=0,
+#                     maximum=1.5,
+#                     step=0.05,
+#                     value=0.80,
+#                 )
+#                 with gr.Accordion("Controlnet"):
+#                     controlnet_selection = gr.CheckboxGroup(
+#                         ["pose", "canny", "depth"], label="Controlnet", value=["pose"],
+#                         info="Use pose for skeleton inference, canny for edge detection, and depth for depth map estimation. You can try all three to control the generation process"
+#                     )
+#                     pose_strength = gr.Slider(
+#                         label="Pose strength",
+#                         minimum=0,
+#                         maximum=1.5,
+#                         step=0.05,
+#                         value=0.40,
+#                     )
+#                     canny_strength = gr.Slider(
+#                         label="Canny strength",
+#                         minimum=0,
+#                         maximum=1.5,
+#                         step=0.05,
+#                         value=0.40,
+#                     )
+#                     depth_strength = gr.Slider(
+#                         label="Depth strength",
+#                         minimum=0,
+#                         maximum=1.5,
+#                         step=0.05,
+#                         value=0.40,
+#                     )
+#                 with gr.Accordion(open=False, label="Advanced Options"):
+#                     negative_prompt = gr.Textbox(
+#                         label="Negative Prompt",
+#                         placeholder="low quality",
+#                         value="(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
+#                     )
+#                     num_steps = gr.Slider(
+#                         label="Number of sample steps",
+#                         minimum=1,
+#                         maximum=100,
+#                         step=1,
+#                         value=5 if enable_lcm_arg else 30,
+#                     )
+#                     guidance_scale = gr.Slider(
+#                         label="Guidance scale",
+#                         minimum=0.1,
+#                         maximum=20.0,
+#                         step=0.1,
+#                         value=0.0 if enable_lcm_arg else 5.0,
+#                     )
+#                     seed = gr.Slider(
+#                         label="Seed",
+#                         minimum=0,
+#                         maximum=MAX_SEED,
+#                         step=1,
+#                         value=42,
+#                     )
+#                     schedulers = [
+#                         "DEISMultistepScheduler",
+#                         "HeunDiscreteScheduler",
+#                         "EulerDiscreteScheduler",
+#                         "DPMSolverMultistepScheduler",
+#                         "DPMSolverMultistepScheduler-Karras",
+#                         "DPMSolverMultistepScheduler-Karras-SDE",
+#                     ]
+#                     scheduler = gr.Dropdown(
+#                         label="Schedulers",
+#                         choices=schedulers,
+#                         value="EulerDiscreteScheduler",
+#                     )
+#                     randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
+#                     enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
+
+#             with gr.Column(scale=1):
+#                 gallery = gr.Image(label="Generated Images")
+#                 usage_tips = gr.Markdown(
+#                     label="InstantID Usage Tips", value=tips, visible=False
+#                 )
+
+#             submit.click(
+#                 fn=remove_tips,
+#                 outputs=usage_tips,
+#             ).then(
+#                 fn=randomize_seed_fn,
+#                 inputs=[seed, randomize_seed],
+#                 outputs=seed,
+#                 queue=False,
+#                 api_name=False,
+#             ).then(
+#                 fn=generate_image,
+#                 inputs=[
+#                     face_file,
+#                     pose_file,
+#                     prompt,
+#                     negative_prompt,
+#                     style,
+#                     num_steps,
+#                     identitynet_strength_ratio,
+#                     adapter_strength_ratio,
+#                     pose_strength,
+#                     canny_strength,
+#                     depth_strength,
+#                     controlnet_selection,
+#                     guidance_scale,
+#                     seed,
+#                     scheduler,
+#                     enable_LCM,
+#                     enhance_face_region,
+#                 ],
+#                 outputs=[gallery, usage_tips],
+#             )
+
+#             enable_LCM.input(
+#                 fn=toggle_lcm_ui,
+#                 inputs=[enable_LCM],
+#                 outputs=[num_steps, guidance_scale],
+#                 queue=False,
+#             )
+
+#         # gr.Examples(
+#         #     examples=get_example(),
+#         #     inputs=[face_file, pose_file, prompt, style, negative_prompt],
+#         #     fn=run_for_examples,
+#         #     outputs=[gallery, usage_tips],
+#         #     cache_examples=True,
+#         # )
+
+#         gr.Markdown(article)
+
+#     demo.launch(share=True)
+
+
+# if __name__ == "__main__":
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument(
+#         "--pretrained_model_name_or_path", type=str, default="wangqixun/YamerMIX_v8"
+#     )
+#     parser.add_argument(
+#         "--enable_LCM", type=bool, default=os.environ.get("ENABLE_LCM", False)
+#     )
+#     args = parser.parse_args()
+
+#     main(args.pretrained_model_name_or_path, args.enable_LCM)
