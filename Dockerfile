@@ -4,9 +4,10 @@ FROM nvidia/cuda:12.6.2-cudnn-runtime-ubuntu22.04
 # Set up working directory
 WORKDIR /workspace
 
-# Set up build arguments for Git commit and version
+# Set up build arguments for Git commit, version, and access token
 ARG GIT_COMMIT
 ARG VERSION_TAG
+ARG DROPBOX_ACCESS_TOKEN 
 
 # Add metadata to the image
 LABEL git_commit=${GIT_COMMIT}
@@ -15,6 +16,9 @@ LABEL version=${VERSION_TAG}
 # Store version info in a file accessible within the container
 RUN echo "git_commit=${GIT_COMMIT}" > image-info.txt && \
     echo "version=${VERSION_TAG}" >> image-info.txt
+
+# Use the access token to set up an environment variable
+ENV DROPBOX_ACCESS_TOKEN=${DROPBOX_ACCESS_TOKEN}
 
 # Install any system dependencies and clean up in a single RUN command
 RUN apt-get update && apt-get install -y \
@@ -37,7 +41,7 @@ RUN git clone https://github.com/photoangell/InstantID.git \
     && if [ ! -e /usr/bin/pip ]; then ln -s /usr/bin/pip3 /usr/bin/pip; fi \
     && python3 -m pip install --upgrade pip \
     && pip install -r InstantID/gradio_demo/requirements.txt \
-    && pip install jupyter pickleshare mediapipe \
+    && pip install jupyter pickleshare mediapipe dropbox \
     && pip install --upgrade huggingface-hub diffusers \
     && pip cache purge
 
