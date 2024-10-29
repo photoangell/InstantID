@@ -4,6 +4,18 @@ FROM nvidia/cuda:12.6.2-cudnn-runtime-ubuntu22.04
 # Set up working directory
 WORKDIR /workspace
 
+# Set up build arguments for Git commit and version
+ARG GIT_COMMIT
+ARG VERSION_TAG
+
+# Add metadata to the image
+LABEL git_commit=${GIT_COMMIT}
+LABEL version=${VERSION_TAG}
+
+# Store version info in a file accessible within the container
+RUN echo "git_commit=${GIT_COMMIT}" > image-info.txt && \
+    echo "version=${VERSION_TAG}" >> image-info.txt
+
 # Install any system dependencies and clean up in a single RUN command
 RUN apt-get update && apt-get install -y \
     python3 python3-dev python3-pip \

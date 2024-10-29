@@ -47,9 +47,12 @@ jobs:
       run: |
         echo "Building the Docker image..."
         docker buildx build . --file Dockerfile --platform linux/amd64 \
+          --build-arg GIT_COMMIT=$(git rev-parse --short HEAD) \
+          --build-arg VERSION_TAG=latest \
           --tag photoangell/ymbbt-faceclone-dev:${{ env.IMAGE_TAG }} \
           --tag photoangell/ymbbt-faceclone-dev:latest \
           --push
+
     # \
     # --progress=plain \
     # --cache-from=type=local,src=/tmp/.buildx-cache \
