@@ -8,7 +8,7 @@
     ],
     "routes": [
         {
-        "src": "/api/(.*)",
+        "src": "/(.*)",
         "dest": "api/sample_image_endpoint.py"
         }
     ]
