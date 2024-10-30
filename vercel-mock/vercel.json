@@ -2,14 +2,14 @@
     "version": 2,
     "builds": [
         {
-        "src": "api/image.py",
+        "src": "api/sample_image_endpoint.py",
         "use": "@vercel/python"
         }
     ],
     "routes": [
         {
-        "src": "/api/image",
-        "dest": "api/image.py"
+        "src": "/api/(.*)",
+        "dest": "api/sample_image_endpoint.py"
         }
     ]
 }
