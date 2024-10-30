@@ -8,6 +8,7 @@ on:
   pull_request:
     paths-ignore:
       - 'vercel-mock/**'
+      - '.github/workflows/vercel-deploy.yml'
     branches: [ "main" ]
 
 jobs:
