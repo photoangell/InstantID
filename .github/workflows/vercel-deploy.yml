@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'vercel-mock/**'  # Only trigger on changes in the vercel-mock directory
+      - '.github/workflows/vercel-deploy.yml'  # Trigger on changes to the workflow file itself
     branches:
       - main
 
