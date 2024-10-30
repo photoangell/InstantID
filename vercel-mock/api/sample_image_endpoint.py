@@ -1,43 +1,60 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, jsonify, request, send_file
+from flask_restx import Api, Resource, fields
 import os
 
 app = Flask(__name__)
+api = Api(app, title="ymbbt FaceClone Mock API", description="API for generating sample images with Swagger documentation.")
 
 SAMPLE_IMAGE_PATH = os.path.join(os.getcwd(), "public", "sample_image_1.jpg")
 
-@app.route('/generate_image', methods=['POST'])
-def generate_image():
-    # Define expected parameters with their default values
-    expected_params = {
-        "face_image_path": None,
-        "pose_image_path": None,
-        "prompt": "",
-        "negative_prompt": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
-        "style_name": "Watercolor",
-        "num_steps": 30,
-        "identitynet_strength_ratio": 0.8,
-        "adapter_strength_ratio": 0.8,
-        "guidance_scale": 5,
-        "seed": 42,
-        "enable_LCM": False,
-        "enhance_face_region": True
-    }
+# Define the expected request payload with Swagger documentation
+generate_image_model = api.model('GenerateImage', {
+    'face_image_path': fields.String(required=True, description="Path to the face image file"),
+    'pose_image_path': fields.String(required=True, description="Path to the pose image file"),
+    'prompt': fields.String(default="", description="Prompt for image generation"),
+    'negative_prompt': fields.String(
+        default="(lowres, low quality, worst quality:1.2), (text:1.2), watermark, ...",
+        description="Negative prompt to avoid specific features"
+    ),
+    'style_name': fields.String(
+        default="Watercolor",
+        description="Style for the generated image",
+        enum=['(No style)', 'Watercolor', 'Film Noir', 'Neon', 'Jungle', 'Mars', 'Vibrant Color', 'Snow', 'Line art']
+    ),
+    'num_steps': fields.Float(default=30, description="Number of sample steps"),
+    'identitynet_strength_ratio': fields.Float(default=0.8, description="IdentityNet strength for fidelity"),
+    'adapter_strength_ratio': fields.Float(default=0.8, description="Image adapter strength for detail"),
+    'guidance_scale': fields.Float(default=5, description="Guidance scale"),
+    'seed': fields.Float(default=42, description="Seed for reproducibility"),
+    'enable_LCM': fields.Boolean(default=False, description="Enable Fast Inference with LCM"),
+    'enhance_face_region': fields.Boolean(default=True, description="Enhance the non-face region")
+})
 
-    # Parse and validate incoming JSON data
-    data = request.json
-    missing_params = [key for key in expected_params if key not in data]
-    
-    if missing_params:
-        return jsonify({"error": f"Missing parameters: {', '.join(missing_params)}"}), 400
-    
-    # Return the sample image and mock usage tips
-    # this is what is returned by gradio, but I think it should return an image right?
-    # up for discussion
-    return jsonify({
-        "generated_image_path": SAMPLE_IMAGE_PATH,
-        "usage_tips": "This is a mock response. In production, this would contain actual usage tips and the generated image path."
-    })
+# Response model for Swagger documentation
+response_model = api.model('GenerateImageResponse', {
+    'generated_image_path': fields.String(description="Path to the generated image"),
+    'usage_tips': fields.String(description="Usage tips for the generated image")
+})
 
+@api.route('/generate_image', methods=['POST'])
+class GenerateImage(Resource):
+    @api.expect(generate_image_model)
+    @api.marshal_with(response_model)
+    def post(self):
+        """Generate a sample image (mock response)."""
+        data = request.json
+
+        # Check for required parameters
+        for key in generate_image_model.keys():
+            if key not in data:
+                return {"error": f"Missing parameter: {key}"}, 400
+
+        # Mock response, no actual image processing
+        return {
+            "generated_image_path": SAMPLE_IMAGE_PATH,
+            "usage_tips": "This is a mock response. In production, this would contain actual usage tips and the generated image path."
+        }
+        
 @app.route('/download_image', methods=['GET'])
 def download_image():
     """Endpoint to download the sample image."""
@@ -45,6 +62,11 @@ def download_image():
         return send_file(SAMPLE_IMAGE_PATH, mimetype='image/jpeg')
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
+
+# Add Swagger UI at the root
+@app.route('/')
+def swagger_ui():
+    return jsonify(api.__schema__)  # Exposes the Swagger JSON schema directly
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)  
+    app.run(host='0.0.0.0', port=5000)
