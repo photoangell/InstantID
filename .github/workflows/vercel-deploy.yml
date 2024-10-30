@@ -25,9 +25,16 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel
 
+      - name: Link to the Correct Vercel Project
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          cd vercel-mock
+          vercel link --token $VERCEL_TOKEN --project ${{ secrets.VERCEL_PROJECT_ID }}
+
       - name: Deploy to Vercel
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           cd vercel-mock
-          vercel --prod --token $VERCEL_TOKEN --confirm --project ymmbt-faceclone-mock
+          vercel --prod --token $VERCEL_TOKEN --confirm
