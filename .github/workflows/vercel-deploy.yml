@@ -25,7 +25,7 @@ jobs:
             ${{ runner.os }}-node-
 
       - name: Install Vercel CLI
-        run: npm ci vercel
+        run: npm install -g vercel
 
       - name: Link to the Correct Vercel Project
         env:
