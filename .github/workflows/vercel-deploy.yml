@@ -1,0 +1,33 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    paths:
+      - 'vercel-mock/**'  # Only trigger on changes in the vercel-mock directory
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          cd vercel-mock
+          vercel --prod --token $VERCEL_TOKEN --confirm
