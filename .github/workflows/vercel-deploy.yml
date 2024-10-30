@@ -14,12 +14,18 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+
+      - name: Cache Node Modules
+        uses: actions/cache@v3
         with:
-          fetch-depth: 0
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       - name: Install Vercel CLI
-        run: npm install -g vercel
+        run: npm ci -g vercel
 
       - name: Link to the Correct Vercel Project
         env:
