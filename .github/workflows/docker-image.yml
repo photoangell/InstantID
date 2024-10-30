@@ -2,8 +2,12 @@ name: Docker Image CI
 
 on:
   push:
+    paths-ignore:
+      - 'vercel-mock/**'
     branches: [ "main" ]
   pull_request:
+    paths-ignore:
+      - 'vercel-mock/**'
     branches: [ "main" ]
 
 jobs:
