@@ -29,6 +29,7 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     nano \
+    supervisor \
     && curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash \
     && apt-get install -y git-lfs \
     && apt-get clean \
@@ -45,9 +46,12 @@ RUN git clone https://github.com/photoangell/InstantID.git \
     && pip install --upgrade huggingface-hub diffusers \
     && pip cache purge
 
-# Expose the Jupyter & gradio port
-EXPOSE 8080 7860
+# Expose the Jupyter, gradio and flask port
+EXPOSE 8080 7860 5000
 
-# Run Jupyter on container startup with the custom token - this is not required when running in Vast.Ai
+COPY supervisord.conf /etc/supervisord.conf
+#CMD ["supervisord", "-c", "/etc/supervisord.conf"]
+
+# Or Run Jupyter on container startup with the custom token - this is not required when running in Vast.Ai
 # This command is in the vast.ai template
 #CMD ["venv-dev/bin/jupyter", "notebook", "--ServerApp.token='YmbbtWillBlowYourTinyMind'", "--port=8080", "--no-browser", "--allow-root"]
