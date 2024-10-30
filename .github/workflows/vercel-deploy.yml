@@ -30,4 +30,4 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           cd vercel-mock
-          vercel --prod --token $VERCEL_TOKEN --confirm
+          vercel --prod --token $VERCEL_TOKEN --confirm --project ymmbt-faceclone-mock
