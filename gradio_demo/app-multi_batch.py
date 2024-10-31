@@ -426,8 +426,9 @@ def run_batch(config):
     output_info = []  # Store info for the text file
 
     # Loop through each passenger image
-    passenger_images = sorted(passenger_batch_dir.glob('*'))
-    reference_images = sorted(reference_batch_dir.glob('*'))
+    valid_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.tiff']
+    passenger_images = sorted([img for img in passenger_batch_dir.glob('*') if img.suffix.lower() in valid_extensions])
+    reference_images = sorted([img for img in reference_batch_dir.glob('*') if img.suffix.lower() in valid_extensions])
 
     # Ensure there are passenger and reference images
     if not passenger_images or not reference_images:
