@@ -32,6 +32,7 @@ from style_template import styles
 from pipeline_stable_diffusion_xl_instantid_full import StableDiffusionXLInstantIDPipeline
 from model_util import load_models_xl, get_torch_device, torch_gc
 from controlnet_util import openpose, get_depth_map, get_canny_image
+from pathlib import Path
 
 import gradio as gr
 
@@ -441,7 +442,7 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
 print('Pipeline built...')
 print('Running batch built...')
 
-from pathlib import Path
+
 # Set all parameters that generate_image will use, (stored in a python dictionary)
 
 config = {
