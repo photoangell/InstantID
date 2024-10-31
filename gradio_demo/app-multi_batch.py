@@ -89,6 +89,8 @@ controlnet_map_fn = {
 
 
 def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=False):
+    print('Pipeline building...')
+    
     if pretrained_model_name_or_path.endswith(
         ".ckpt"
     ) or pretrained_model_name_or_path.endswith(".safetensors"):
@@ -439,8 +441,8 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
         return images[0] #, gr.update(visible=True)
 
 
-print('Pipeline built...')
-print('Running batch built...')
+    print('Pipeline built...')
+    print('Running batch built...')
 
 
 # Set all parameters that generate_image will use, (stored in a python dictionary)
@@ -497,6 +499,7 @@ def run_batch(config):
 
     image_index = 1
     for passenger_image in passenger_images:
+        print (f"processing image {image_index}: {passenger_image}")
         for reference_image in reference_images:
             # Generate image using unpacked parameters
             generated_image = generate_image(
