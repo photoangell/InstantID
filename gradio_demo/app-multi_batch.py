@@ -764,3 +764,7 @@ def run_batch(config):
 #     args = parser.parse_args()
 
 #     main(args.pretrained_model_name_or_path, args.enable_LCM)
+
+if __name__ == "__main__":
+    main()
+    
