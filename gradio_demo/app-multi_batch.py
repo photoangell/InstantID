@@ -445,81 +445,81 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
     print('Running batch built...')
 
 
-# Set all parameters that generate_image will use, (stored in a python dictionary)
+    # Set all parameters that generate_image will use, (stored in a python dictionary)
 
-config = {
-    "passenger_dir": "/workspace/img/inputs/passenger",
-    "reference_dir": "/workspace/img/inputs/reference",
-    "output_dir": "/workspace/img/output",
-    "batch_name": "batch1",
-    "generate_image_params": {
-        "prompt": "",
-        "negative_prompt": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
-        "style_name": "",
-        "num_steps": 30,
-        "identitynet_strength_ratio": 0.8,
-        "adapter_strength_ratio": 0.8,
-        "guidance_scale": 5,
-        "seed": 42,
-        "enable_LCM": False,
-        "enhance_face_region": True
+    config = {
+        "passenger_dir": "/workspace/img/inputs/passenger",
+        "reference_dir": "/workspace/img/inputs/reference",
+        "output_dir": "/workspace/img/output",
+        "batch_name": "batch1",
+        "generate_image_params": {
+            "prompt": "",
+            "negative_prompt": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
+            "style_name": "",
+            "num_steps": 30,
+            "identitynet_strength_ratio": 0.8,
+            "adapter_strength_ratio": 0.8,
+            "guidance_scale": 5,
+            "seed": 42,
+            "enable_LCM": False,
+            "enhance_face_region": True
+        }
     }
-}
 
-def run_batch(config):
-    # read some of the params in config
-    passenger_dir = config['passenger_dir']
-    reference_dir = config['reference_dir']
-    output_dir = config['output_dir']
-    batch_name = config['batch_name']
-    generate_image_params = config['generate_image_params']
-    
-    # Paths and directories as before...
-    
-    # Set Paths for batch-specific folders
-    passenger_batch_dir = os.path.join(passenger_dir, batch_name)
-    reference_batch_dir = os.path.join(reference_dir, batch_name)
-    output_batch_dir = os.path.join(output_dir, batch_name)
+    def run_batch(config):
+        # read some of the params in config
+        passenger_dir = config['passenger_dir']
+        reference_dir = config['reference_dir']
+        output_dir = config['output_dir']
+        batch_name = config['batch_name']
+        generate_image_params = config['generate_image_params']
+        
+        # Paths and directories as before...
+        
+        # Set Paths for batch-specific folders
+        passenger_batch_dir = os.path.join(passenger_dir, batch_name)
+        reference_batch_dir = os.path.join(reference_dir, batch_name)
+        output_batch_dir = os.path.join(output_dir, batch_name)
 
-    # Step 1: Check and create batch directories if they don't exist
-    Path(passenger_batch_dir).mkdir(parents=True, exist_ok=True)
-    Path(reference_batch_dir).mkdir(parents=True, exist_ok=True)
-    Path(output_batch_dir).mkdir(parents=True, exist_ok=True)
+        # Step 1: Check and create batch directories if they don't exist
+        Path(passenger_batch_dir).mkdir(parents=True, exist_ok=True)
+        Path(reference_batch_dir).mkdir(parents=True, exist_ok=True)
+        Path(output_batch_dir).mkdir(parents=True, exist_ok=True)
 
-    # Step 2: Generate images and save details
-    output_info = []  # Store info for the text file
+        # Step 2: Generate images and save details
+        output_info = []  # Store info for the text file
 
-    # Loop through each passenger image
-    passenger_images = sorted(Path(passenger_dir).glob('*'))
-    reference_images = sorted(Path(reference_dir).glob('*'))
+        # Loop through each passenger image
+        passenger_images = sorted(Path(passenger_dir).glob('*'))
+        reference_images = sorted(Path(reference_dir).glob('*'))
 
-    # Ensure there are passenger and reference images
-    if not passenger_images or not reference_images:
-        raise ValueError("Ensure both passenger and reference directories contain images.")
+        # Ensure there are passenger and reference images
+        if not passenger_images or not reference_images:
+            raise ValueError("Ensure both passenger and reference directories contain images.")
 
-    image_index = 1
-    for passenger_image in passenger_images:
-        print (f"processing image {image_index}: {passenger_image}")
-        for reference_image in reference_images:
-            # Generate image using unpacked parameters
-            generated_image = generate_image(
-                face_image_path=passenger_image,
-                pose_image_path=reference_image,
-                **generate_image_params
-            )
+        image_index = 1
+        for passenger_image in passenger_images:
+            print (f"processing image {image_index}: {passenger_image}")
+            for reference_image in reference_images:
+                # Generate image using unpacked parameters
+                generated_image = generate_image(
+                    face_image_path=passenger_image,
+                    pose_image_path=reference_image,
+                    **generate_image_params
+                )
 
-            # Step 3: Write the input and output image names plus the params used
-            image.save(f"{output_batch_dir}{image_index}.jpg")
-            log_file_path = os.path.join(output_batch_dir, f"{image_index}.txt")
-            with open(log_file_path, 'w') as log_file:
-                for info in output_info:
-                    log_file.write(f"Passenger File: {info['passenger_file']}\n")
-                    log_file.write(f"Reference File: {info['reference_file']}\n")
-                    log_file.write(f"Output File: {info['output_file']}\n")
-                    log_file.write(f"Parameters: param1={info['param1']}, param2={info['param2']}\n")
-                    log_file.write("\n---\n\n")
+                # Step 3: Write the input and output image names plus the params used
+                image.save(f"{output_batch_dir}{image_index}.jpg")
+                log_file_path = os.path.join(output_batch_dir, f"{image_index}.txt")
+                with open(log_file_path, 'w') as log_file:
+                    for info in output_info:
+                        log_file.write(f"Passenger File: {info['passenger_file']}\n")
+                        log_file.write(f"Reference File: {info['reference_file']}\n")
+                        log_file.write(f"Output File: {info['output_file']}\n")
+                        log_file.write(f"Parameters: param1={info['param1']}, param2={info['param2']}\n")
+                        log_file.write("\n---\n\n")
 
-            image_index += 1
+                image_index += 1
             
 
 
