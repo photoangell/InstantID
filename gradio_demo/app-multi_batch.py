@@ -196,6 +196,7 @@ def apply_style(
     return p.replace("{prompt}", positive), n + " " + negative
 
 def generate_image(
+    pipe,
     face_image_path,
     pose_image_path,
     prompt,
@@ -407,9 +408,9 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
         }
     }
 
-    run_batch(config)
+    run_batch(config, pipe)
 
-def run_batch(config):
+def run_batch(config, pipe):
     # read some of the params in config
     passenger_dir = Path(config['passenger_dir'])
     reference_dir = Path(config['reference_dir'])
@@ -455,6 +456,7 @@ def run_batch(config):
             # Generate image using unpacked parameters
             try:
                 generated_image = generate_image(
+                    pipe = pipe,
                     face_image_path=str(passenger_image),
                     pose_image_path=str(reference_image),
                     prompt=generate_image_params.get('prompt', ''),
