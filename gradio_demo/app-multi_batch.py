@@ -452,7 +452,16 @@ def run_batch(config):
                 generated_image = generate_image(
                     face_image_path=str(passenger_image),
                     pose_image_path=str(reference_image),
-                    **generate_image_params
+                    prompt=generate_image_params.get('prompt', ''),
+                    negative_prompt=generate_image_params.get('negative_prompt', ''),
+                    style_name=generate_image_params.get('style_name', ''),
+                    num_steps=generate_image_params.get('num_steps', 30),
+                    identitynet_strength_ratio=generate_image_params.get('identitynet_strength_ratio', 0.8),
+                    adapter_strength_ratio=generate_image_params.get('adapter_strength_ratio', 0.8),
+                    guidance_scale=generate_image_params.get('guidance_scale', 5),
+                    seed=generate_image_params.get('seed', 42),
+                    enable_LCM=generate_image_params.get('enable_LCM', False),
+                    enhance_face_region=generate_image_params.get('enhance_face_region', True)
                 )
 
                 # Step 3: Save the generated image
