@@ -385,8 +385,8 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
     # Set all parameters that generate_image will use, (stored in a python dictionary)
 
     config = {
-        "passenger_dir": "/workspace/img/inputs/passenger",
-        "reference_dir": "/workspace/img/inputs/reference",
+        "passenger_dir": "/workspace/img/input/passenger",
+        "reference_dir": "/workspace/img/input/reference",
         "output_dir": "/workspace/img/output",
         "batch_name": "batch1",
         "generate_image_params": {
