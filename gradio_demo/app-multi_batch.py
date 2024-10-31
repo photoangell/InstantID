@@ -438,11 +438,13 @@ def run_batch(config):
         if not passenger_image.is_file():
             continue  # Skip if it's not a file
         
+        passenger_filename = passenger_image.stem
         for reference_image in reference_images:
             if not reference_image.is_file():
                 continue  # Skip if it's not a file
             
-            print(f"Processing image {image_index}: {passenger_image} with reference {reference_image}")
+            reference_filename = reference_image.stem
+            print(f"Processing image {image_index}: {passenger_filename} with reference {reference_filename}")
             
             # Generate image using unpacked parameters
             try:
@@ -453,11 +455,11 @@ def run_batch(config):
                 )
 
                 # Step 3: Save the generated image
-                output_image_path = output_batch_dir / f"{image_index}.jpg"
+                output_image_path = output_batch_dir / f"{passenger_filename}.{reference_filename}.output.jpg"
                 generated_image.save(output_image_path)
 
                 # Step 4: Write log information
-                log_file_path = output_batch_dir / f"{image_index}.txt"
+                log_file_path = output_batch_dir / f"{passenger_filename}.{reference_filename}.output.txt"
                 with log_file_path.open('w') as log_file:
                     log_file.write(f"Passenger File: {passenger_image}\n")
                     log_file.write(f"Reference File: {reference_image}\n")
