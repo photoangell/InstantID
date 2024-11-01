@@ -4,7 +4,8 @@
 # appended rudimentary batch process
 
 import sys
-sys.path.append("./")
+SCRIPT_DIR = Path(__file__).resolve().parent
+sys.path.append(str(SCRIPT_DIR))
 
 from typing import Tuple
 
@@ -47,14 +48,14 @@ DEFAULT_STYLE_NAME = "(No style)"
 # Load face encoder
 app = FaceAnalysis(
     name="antelopev2",
-    root="./",
+    root=str(SCRIPT_DIR),
     providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
 )
 app.prepare(ctx_id=0, det_size=(640, 640))
 
 # Path to InstantID models
-face_adapter = f"./checkpoints/ip-adapter.bin"
-controlnet_path = f"./checkpoints/ControlNetModel"
+face_adapter = SCRIPT_DIR / "checkpoints/ip-adapter.bin"
+controlnet_path = SCRIPT_DIR / "checkpoints/ControlNetModel"
 
 # Load pipeline face ControlNetModel
 controlnet_identitynet = ControlNetModel.from_pretrained(
