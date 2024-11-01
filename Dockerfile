@@ -42,7 +42,7 @@ RUN git clone https://github.com/photoangell/InstantID.git \
     && if [ ! -e /usr/bin/pip ]; then ln -s /usr/bin/pip3 /usr/bin/pip; fi \
     && python3 -m pip install --upgrade pip \
     && pip install -r InstantID/gradio_demo/requirements.txt \
-    && pip install jupyter pickleshare mediapipe dropbox flask flask-restx \
+    && pip install jupyter pickleshare mediapipe dropbox flask flask-restx deepface tf_keras \
     && pip install --upgrade huggingface-hub diffusers \
     && pip cache purge
 
