@@ -4,9 +4,6 @@
 # appended rudimentary batch process
 
 import sys
-SCRIPT_DIR = Path(__file__).resolve().parent
-sys.path.append(str(SCRIPT_DIR))
-
 from typing import Tuple
 
 import os
@@ -37,6 +34,8 @@ from pathlib import Path
 
 import gradio as gr
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+sys.path.append(str(SCRIPT_DIR))
 
 # global variable
 MAX_SEED = np.iinfo(np.int32).max
