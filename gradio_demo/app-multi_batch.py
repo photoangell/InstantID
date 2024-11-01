@@ -6,8 +6,13 @@
 import sys
 from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
-sys.path.append(str(SCRIPT_DIR))
-print (f"script path is {SCRIPT_DIR}")
+PROJECT_ROOT = SCRIPT_DIR.parent  # or .resolve().parents[n] for n levels up
+
+# Add project root to sys.path
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
+    
+print (f"script path is {SCRIPT_DIR}, project root is {PROJECT_ROOT}")
 
 from typing import Tuple
 import os
@@ -48,14 +53,14 @@ DEFAULT_STYLE_NAME = "(No style)"
 # Load face encoder
 app = FaceAnalysis(
     name="antelopev2",
-    root=str(SCRIPT_DIR),
+    root=str(PROJECT_ROOT),
     providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
 )
 app.prepare(ctx_id=0, det_size=(640, 640))
 
 # Path to InstantID models
-face_adapter = SCRIPT_DIR / "checkpoints/ip-adapter.bin"
-controlnet_path = SCRIPT_DIR / "checkpoints/ControlNetModel"
+face_adapter = PROJECT_ROOT / "checkpoints/ip-adapter.bin"
+controlnet_path = PROJECT_ROOT / "checkpoints/ControlNetModel"
 
 # Load pipeline face ControlNetModel
 controlnet_identitynet = ControlNetModel.from_pretrained(
