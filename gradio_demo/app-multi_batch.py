@@ -4,8 +4,12 @@
 # appended rudimentary batch process
 
 import sys
-from typing import Tuple
+from pathlib import Path
+SCRIPT_DIR = Path(__file__).resolve().parent
+sys.path.append(str(SCRIPT_DIR))
+print (f"script path is {SCRIPT_DIR}")
 
+from typing import Tuple
 import os
 import cv2
 import math
@@ -30,13 +34,9 @@ from style_template import styles
 from pipeline_stable_diffusion_xl_instantid_full import StableDiffusionXLInstantIDPipeline
 from model_util import load_models_xl, get_torch_device, torch_gc
 from controlnet_util import openpose, get_depth_map, get_canny_image
-from pathlib import Path
 
 import gradio as gr
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-sys.path.append(str(SCRIPT_DIR))
-print (f"script path is {SCRIPT_DIR}")
 
 # global variable
 MAX_SEED = np.iinfo(np.int32).max
