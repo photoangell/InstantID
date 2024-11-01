@@ -36,6 +36,7 @@ import gradio as gr
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 sys.path.append(str(SCRIPT_DIR))
+print (f"script path is {SCRIPT_DIR}")
 
 # global variable
 MAX_SEED = np.iinfo(np.int32).max
