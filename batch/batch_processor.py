@@ -38,7 +38,7 @@ if __name__ == "__main__":
     port_number = input("Enter the port number for SSH: ")
     local_directory = input("Enter the local directory path: ")
     remote_directory = input("Enter the remote directory path: ")
-    remote_command = input("Enter the command to run on the remote machine: ")
+    remote_command = "/workspace/InstantID/gradio_demo/app-multi_batch.py"
 
     # Validate that local directory exists
     if not os.path.isdir(local_directory):
