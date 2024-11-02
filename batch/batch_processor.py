@@ -1,5 +1,6 @@
 import subprocess
 import os
+import json
 
 def sync_and_execute(ip_address, port_number, local_directory, remote_directory, remote_command):
     try:
@@ -32,16 +33,33 @@ def sync_and_execute(ip_address, port_number, local_directory, remote_directory,
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while running the command: {e}")
 
+def load_previous_inputs():
+    try:
+        with open(os.path.join(os.path.dirname(__file__), "previous_batch_inputs.json"), "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+def save_inputs(ip_address, port_number, local_directory):
+    with open(os.path.join(os.path.dirname(__file__), "previous_batch_inputs.json"), "w") as f:
+        json.dump({
+            "ip_address": ip_address,
+            "port_number": port_number,
+            "local_directory": local_directory
+        }, f)
+
 if __name__ == "__main__":
-    # Take inputs from the user
-    ip_address = input("Enter the IP address of the remote machine: ")
-    port_number = input("Enter the port number for SSH: ")
-    local_directory = input("Enter the local directory path: ")
+    previous_inputs = load_previous_inputs()
+
+    ip_address = input(f"Enter the IP address of the remote machine [{previous_inputs.get('ip_address', '')}]: ") or previous_inputs.get('ip_address', '')
+    port_number = input(f"Enter the port number for SSH [{previous_inputs.get('port_number', '')}]: ") or previous_inputs.get('port_number', '')
+    local_directory = input(f"Enter the local directory path [{previous_inputs.get('local_directory', '')}]: ") or previous_inputs.get('local_directory', '')
     remote_directory = "/workspace/img"
     remote_command = "python /workspace/InstantID/gradio_demo/app-multi_batch.py"
 
-    # Validate that local directory exists
     if not os.path.isdir(local_directory):
         print("Error: The specified local directory does not exist.")
     else:
+        save_inputs(ip_address, port_number, local_directory)
+        
         sync_and_execute(ip_address, port_number, local_directory, remote_directory, remote_command)
