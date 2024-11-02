@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     ip_address = input(f"Enter the IP address of the remote machine [{previous_inputs.get('ip_address', '')}]: ") or previous_inputs.get('ip_address', '')
     port_number = input(f"Enter the port number for SSH [{previous_inputs.get('port_number', '')}]: ") or previous_inputs.get('port_number', '')
-    local_directory = input(f"Enter the local directory path [{previous_inputs.get('local_directory', '')}]: ") or previous_inputs.get('local_directory', '')
+    local_directory = (input(f"Enter the local directory path [{previous_inputs.get('local_directory', '')}]: ") or previous_inputs.get('local_directory', '')).rstrip('/')
     remote_directory = "/workspace/img"
     remote_command = "python /workspace/InstantID/gradio_demo/app-multi_batch.py"
 
