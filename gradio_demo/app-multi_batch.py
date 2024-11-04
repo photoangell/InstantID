@@ -17,6 +17,7 @@ print (f"script path is {SCRIPT_DIR}, project root is {PROJECT_ROOT}")
 from typing import Tuple
 import os
 import argparse
+import json
 import cv2
 import math
 import torch
@@ -390,44 +391,39 @@ def main(batch_name, pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enab
     print('Running batch built...')
 
     # Set all parameters that generate_image will use, (stored in a python dictionary)
+    batch_config_path = "workspace" / "img" / "input" / batch_name / "batchconfig.json"
 
+    if not batch_config_path.is_file():
+        print(f"Error: Configuration file not found at {batch_config_path}. Please ensure the config file exists.")
+        sys.exit(1)
+        
+    try:
+        with batch_config_path.open('r') as config_file:
+            generate_image_params = json.load(config_file)
+    except json.JSONDecodeError as e:
+        print(f"Error: Failed to parse JSON configuration file at {batch_config_path}.")
+        print(f"Details: {e}")
+        sys.exit(1)
+        
     config = {
-        "passenger_dir": "/workspace/img/input/passenger",
-        "reference_dir": "/workspace/img/input/reference",
+        "input_dir": "/workspace/img/input",
         "output_dir": "/workspace/img/output",
-        "batch_name": "batch1",
-        "generate_image_params": {
-            "prompt": "",
-            "negative_prompt": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
-            "style_name": "",
-            "num_steps": 30,
-            "identitynet_strength_ratio": 0.8,
-            "adapter_strength_ratio": 0.8,
-            "pose_strength": 0.4,
-            "canny_strength": 0.3,
-            "depth_strength": 0.5,
-            "controlnet_selection": ["pose", "canny"],
-            "guidance_scale": 5,
-            "scheduler": "EulerDiscreteScheduler",
-            "seed": 42,
-            "enable_LCM": False,
-            "enhance_face_region": True
-        }
+        "batch_name": batch_name,
+        "generate_image_params": generate_image_params
     }
 
     run_batch(config, pipe)
 
 def run_batch(config, pipe):
     # read some of the params in config
-    passenger_dir = Path(config['passenger_dir'])
-    reference_dir = Path(config['reference_dir'])
+    input_dir = Path(config['input_dir'])
     output_dir = Path(config['output_dir'])
     batch_name = config['batch_name']
     generate_image_params = config['generate_image_params']
     
     # Set Paths for batch-specific folders
-    passenger_batch_dir = passenger_dir / batch_name
-    reference_batch_dir = reference_dir / batch_name
+    passenger_batch_dir = input_dir / batch_name / "passenger"
+    reference_batch_dir = input_dir / batch_name / "reference"
     output_batch_dir = output_dir / batch_name
 
     # Step 1: Check and create batch directories if they don't exist
