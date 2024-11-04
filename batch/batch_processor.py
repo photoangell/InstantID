@@ -64,7 +64,8 @@ def save_inputs(ip_address, port_number, local_directory):
         json.dump({
             "ip_address": ip_address,
             "port_number": port_number,
-            "local_directory": local_directory
+            "local_directory": local_directory,
+            "batch_name": batch_name
         }, f)
 
 if __name__ == "__main__":
