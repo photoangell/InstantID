@@ -1,0 +1,17 @@
+{
+    "prompt": "",
+    "negative_prompt": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
+    "style_name": "",
+    "num_steps": 30,
+    "identitynet_strength_ratio": 0.8,
+    "adapter_strength_ratio": 0.8,
+    "pose_strength": 0.4,
+    "canny_strength": 0.3,
+    "depth_strength": 0.5,
+    "controlnet_selection": ["pose", "canny"],
+    "guidance_scale": 5,
+    "scheduler": "EulerDiscreteScheduler",
+    "seed": 42,
+    "enable_LCM": false,
+    "enhance_face_region": true
+}
