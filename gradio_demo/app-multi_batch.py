@@ -317,8 +317,9 @@ def generate_image(
         control_scales = float(identitynet_strength_ratio)
         control_images = face_kps
 
-    generator = torch.Generator(device=device).manual_seed(seed)
-
+    seed_to_use = randomize_seed_fn(seed, seed == -1)
+    generator = torch.Generator(device=device).manual_seed(seed_to_use)
+                                                                                                                           
     print("Start inference...")
     print(f"[Debug] Prompt: {prompt}, \n[Debug] Neg Prompt: {negative_prompt}")
 
@@ -337,7 +338,7 @@ def generate_image(
         generator=generator,
     ).images
 
-    return images[0] #, gr.update(visible=True)
+    return images[0], seed_to_use #, gr.update(visible=True)
 
 def main(batch_name, pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=False):
     print('Pipeline building...')
@@ -458,7 +459,7 @@ def run_batch(config, pipe):
             
             # Generate image using unpacked parameters
             try:
-                generated_image = generate_image(
+                generated_image, seed_used = generate_image(
                     pipe = pipe,
                     face_image_path=str(passenger_image),
                     pose_image_path=str(reference_image),
@@ -474,7 +475,7 @@ def run_batch(config, pipe):
                     controlnet_selection=generate_image_params.get('controlnet_selection', ["pose", "canny"]),
                     guidance_scale=generate_image_params.get('guidance_scale', 5),
                     scheduler=generate_image_params.get('scheduler', 'EulerDiscreteScheduler'),
-                    seed=generate_image_params.get('seed', 42),
+                    seed=generate_image_params.get('seed', -1),
                     enable_LCM=generate_image_params.get('enable_LCM', False),
                     enhance_face_region=generate_image_params.get('enhance_face_region', True)
                 )
@@ -489,6 +490,7 @@ def run_batch(config, pipe):
                     log_file.write(f"Passenger File: {passenger_image}\n")
                     log_file.write(f"Reference File: {reference_image}\n")
                     log_file.write(f"Output File: {output_image_path}\n")
+                    log_file.write(f"Seed Used: {seed_used}\n")
                     log_file.write(f"Parameters: {generate_image_params}\n")
                     log_file.write("\n---\n\n")
 
