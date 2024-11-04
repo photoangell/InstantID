@@ -392,7 +392,7 @@ def main(batch_name, pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enab
     print('Running batch built...')
 
     # Set all parameters that generate_image will use, (stored in a python dictionary)
-    batch_config_path = "workspace" / "img" / "input" / batch_name / "batchconfig.json"
+    batch_config_path =  Path("workspace") / "img" / "input" / batch_name / "batchconfig.json"
 
     if not batch_config_path.is_file():
         print(f"Error: Configuration file not found at {batch_config_path}. Please ensure the config file exists.")
