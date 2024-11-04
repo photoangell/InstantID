@@ -7,7 +7,7 @@ def sync_and_execute(ip_address, port_number, local_directory, remote_directory,
     try:
         # Step 1: Rsync from local to remote
         rsync_command_1 = [
-            "rsync", "-avz", "--ignore-existing", "--no-perms", "--no-owner", "--no-group", "-e",
+            "rsync", "-avz", "--no-perms", "--no-owner", "--no-group", "-e",
             f"ssh -p {port_number}",
             f"{local_directory}/input", f"root@{ip_address}:{remote_directory}"
         ]
@@ -37,7 +37,7 @@ def sync_and_execute(ip_address, port_number, local_directory, remote_directory,
 
         # Step 3: Rsync from remote back to local
         rsync_command_2 = [
-            "rsync", "-avz", "--ignore-existing", "--no-perms", "-e",
+            "rsync", "-avz", "--no-perms", "-e",
             f"ssh -p {port_number}",
             f"root@{ip_address}:{remote_directory}/output", f"{local_directory}"
         ]
