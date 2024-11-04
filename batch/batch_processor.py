@@ -66,7 +66,7 @@ if __name__ == "__main__":
     ip_address = input(f"Enter the IP address of the remote machine [{previous_inputs.get('ip_address', '')}]: ") or previous_inputs.get('ip_address', '')
     port_number = input(f"Enter the port number for SSH [{previous_inputs.get('port_number', '')}]: ") or previous_inputs.get('port_number', '')
     remote_directory = "/workspace/img"
-    remote_command = "python /workspace/InstantID/gradio_demo/app-multi_batch.py"
+    remote_command = "python /workspace/InstantID/gradio_demo/app-multi_batch.py --batch_name " + batch_name
 
     if not os.path.isdir(local_directory):
         print("==============================")
