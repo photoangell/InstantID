@@ -1,4 +1,5 @@
 import subprocess
+import sys
 import os
 import json
 
@@ -25,7 +26,14 @@ def sync_and_execute(ip_address, port_number, local_directory, remote_directory,
         print("==============================")
         print(f"Running command: {' '.join(ssh_command)}")
         print("==============================")
-        subprocess.run(ssh_command, check=True)
+        try:
+            # Run the command, check=True will cause an exception if exit code is not 0
+            subprocess.run(ssh_command, check=True)
+            print("Script ran successfully.")
+        except subprocess.CalledProcessError as e:
+            # Handle the error if the script exits with a non-zero status
+            print(f"Script failed with exit code {e.returncode}")
+            sys.exit()
 
         # Step 3: Rsync from remote back to local
         rsync_command_2 = [
