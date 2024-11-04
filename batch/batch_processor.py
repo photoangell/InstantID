@@ -10,7 +10,10 @@ def sync_and_execute(ip_address, port_number, local_directory, remote_directory,
             f"ssh -p {port_number}",
             f"{local_directory}/input", f"root@{ip_address}:{remote_directory}"
         ]
+        
+        print("==============================")
         print(f"Running command: {' '.join(rsync_command_1)}")
+        print("==============================")
         subprocess.run(rsync_command_1, check=True)
 
         # Step 2: Run a process on the remote machine via SSH
@@ -18,7 +21,10 @@ def sync_and_execute(ip_address, port_number, local_directory, remote_directory,
             "ssh", "-p", str(port_number), f"root@{ip_address}",
             remote_command
         ]
+        
+        print("==============================")
         print(f"Running command: {' '.join(ssh_command)}")
+        print("==============================")
         subprocess.run(ssh_command, check=True)
 
         # Step 3: Rsync from remote back to local
@@ -27,11 +33,16 @@ def sync_and_execute(ip_address, port_number, local_directory, remote_directory,
             f"ssh -p {port_number}",
             f"root@{ip_address}:{remote_directory}/output", f"{local_directory}"
         ]
+        
+        print("==============================")
         print(f"Running command: {' '.join(rsync_command_2)}")
+        print("==============================")
         subprocess.run(rsync_command_2, check=True)
 
     except subprocess.CalledProcessError as e:
+        print("==============================")
         print(f"An error occurred while running the command: {e}")
+        print("==============================")
 
 def load_previous_inputs():
     try:
@@ -58,7 +69,9 @@ if __name__ == "__main__":
     remote_command = "python /workspace/InstantID/gradio_demo/app-multi_batch.py"
 
     if not os.path.isdir(local_directory):
+        print("==============================")
         print("Error: The specified local directory does not exist.")
+        print("==============================")
     else:
         save_inputs(ip_address, port_number, local_directory)
         
