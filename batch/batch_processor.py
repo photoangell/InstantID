@@ -62,6 +62,7 @@ def save_inputs(ip_address, port_number, local_directory):
 if __name__ == "__main__":
     previous_inputs = load_previous_inputs()
     local_directory = (input(f"Enter the local directory root batch path [{previous_inputs.get('local_directory', '')}]: ") or previous_inputs.get('local_directory', '')).rstrip('/')
+    batch_name = input(f"Enter the batch directory name [{previous_inputs.get('batch_name', '')}]: ") or previous_inputs.get('batch_name', '')
     ip_address = input(f"Enter the IP address of the remote machine [{previous_inputs.get('ip_address', '')}]: ") or previous_inputs.get('ip_address', '')
     port_number = input(f"Enter the port number for SSH [{previous_inputs.get('port_number', '')}]: ") or previous_inputs.get('port_number', '')
     remote_directory = "/workspace/img"
