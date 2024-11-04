@@ -16,6 +16,7 @@ print (f"script path is {SCRIPT_DIR}, project root is {PROJECT_ROOT}")
 
 from typing import Tuple
 import os
+import argparse
 import cv2
 import math
 import torch
@@ -337,7 +338,7 @@ def generate_image(
 
     return images[0] #, gr.update(visible=True)
 
-def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=False):
+def main(batch_name, pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=False):
     print('Pipeline building...')
     
     if pretrained_model_name_or_path.endswith(
@@ -501,5 +502,12 @@ def run_batch(config, pipe):
                 print(f"Error processing passenger image {passenger_image} with reference image {reference_image}: {e}")
 
 if __name__ == "__main__":
-    main()
+# Set up argument parsing for command-line use
+    parser = argparse.ArgumentParser(description="Run InstantID batch processing.")
+    parser.add_argument('--batch_name', type=str, required=True, help='The batch directory name for processing')
+
+    args = parser.parse_args()
+    
+    # Pass the arguments to main()
+    main(batch_name=args.batch_name)
 
