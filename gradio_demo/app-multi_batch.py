@@ -481,11 +481,11 @@ def run_batch(config, pipe):
                 )
 
                 # Step 3: Save the generated image
-                output_image_path = output_batch_dir / f"{passenger_filename}.{reference_filename}.output.jpg"
+                output_image_path = output_batch_dir / f"{passenger_filename}.{reference_filename}.{seed_used}.output.jpg"
                 generated_image.save(output_image_path)
 
                 # Step 4: Write log information
-                log_file_path = output_batch_dir / f"{passenger_filename}.{reference_filename}.output.txt"
+                log_file_path = output_batch_dir / f"{passenger_filename}.{reference_filename}.{seed_used}.output.txt"
                 with log_file_path.open('w') as log_file:
                     log_file.write(f"Passenger File: {passenger_image}\n")
                     log_file.write(f"Reference File: {reference_image}\n")
