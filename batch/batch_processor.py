@@ -59,17 +59,21 @@ def load_previous_inputs():
     except FileNotFoundError:
         return {}
 
-def save_inputs(ip_address, port_number, local_directory):
+def save_inputs(ip_address, port_number, local_directory, batch_name, is_eric):
     with open(os.path.join(os.path.dirname(__file__), "previous_batch_inputs.json"), "w") as f:
         json.dump({
             "ip_address": ip_address,
             "port_number": port_number,
             "local_directory": local_directory,
-            "batch_name": batch_name
+            "batch_name": batch_name,
+            "is_eric": is_eric
         }, f)
 
 if __name__ == "__main__":
     previous_inputs = load_previous_inputs()
+    default_value = previous_inputs.get('is_eric', 'n')
+    user_input = input(f"Are you Eric? (y/n) [{default_value}]: ") or default_value
+    is_eric = user_input.lower() == 'y'
     local_directory = (input(f"Enter the local directory root batch path [{previous_inputs.get('local_directory', '')}]: ") or previous_inputs.get('local_directory', '')).rstrip('/')
     batch_name = input(f"Enter the batch directory name [{previous_inputs.get('batch_name', '')}]: ") or previous_inputs.get('batch_name', '')
     ip_address = input(f"Enter the IP address of the remote machine [{previous_inputs.get('ip_address', '')}]: ") or previous_inputs.get('ip_address', '')
@@ -82,6 +86,6 @@ if __name__ == "__main__":
         print("Error: The specified local directory does not exist.")
         print("==============================")
     else:
-        save_inputs(ip_address, port_number, local_directory)
+        save_inputs(ip_address, port_number, local_directory, batch_name, is_eric)
         
         sync_and_execute(ip_address, port_number, local_directory, remote_directory, remote_command)
