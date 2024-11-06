@@ -392,7 +392,7 @@ def main(batch_name, pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enab
     print('Running batch built...')
 
     # Set all parameters that generate_image will use, (stored in a python dictionary)
-    batch_config_path =  Path("/workspace") / "img" / "input" / batch_name / "batchconfig.json"
+    batch_config_path =  Path("/workspace") / "img" / batch_name / "input" / "batchconfig.json"
 
     if not batch_config_path.is_file():
         print(f"Error: Configuration file not found at {batch_config_path}. Please ensure the config file exists.")
@@ -407,8 +407,6 @@ def main(batch_name, pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enab
         sys.exit(1)
         
     config = {
-        "input_dir": "/workspace/img/input",
-        "output_dir": "/workspace/img/output",
         "batch_name": batch_name,
         "generate_image_params": generate_image_params
     }
@@ -417,15 +415,13 @@ def main(batch_name, pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enab
 
 def run_batch(config, pipe):
     # read some of the params in config
-    input_dir = Path(config['input_dir'])
-    output_dir = Path(config['output_dir'])
     batch_name = config['batch_name']
     generate_image_params = config['generate_image_params']
     
     # Set Paths for batch-specific folders
-    passenger_batch_dir = input_dir / batch_name / "passenger"
-    reference_batch_dir = input_dir / batch_name / "reference"
-    output_batch_dir = output_dir / batch_name
+    passenger_batch_dir = "workspace" / "img" / batch_name / "input" / "passenger"
+    reference_batch_dir = "workspace" / "img" / batch_name / "input" / "reference"
+    output_batch_dir = "workspace" / "img" / batch_name / "output"
 
     # Step 1: Check and create batch directories if they don't exist
     passenger_batch_dir.mkdir(parents=True, exist_ok=True)

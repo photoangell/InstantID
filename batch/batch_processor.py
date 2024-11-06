@@ -3,14 +3,14 @@ import sys
 import os
 import json
 
-def sync_and_execute(ip_address, port_number, local_directory, remote_directory, remote_command):
+def sync_and_execute(ip_address, port_number, local_directory, remote_directory, remote_command, batch_name):
     try:
         ssh_command_base = f"ssh -i ~/.ssh/vast_ai -p {port_number}" if is_eric else f"ssh -p {port_number}"
         # Step 1: Rsync from local to remote
         rsync_command_1 = [
             "rsync", "-avz", "--no-perms", "--no-owner", "--no-group", "-e",
             ssh_command_base,
-            f"{local_directory}/input", f"root@{ip_address}:{remote_directory}"
+            f"{local_directory}/{batch_name}/input", f"root@{ip_address}:{remote_directory}/{batch_name}"
         ]
         
         print("==============================")
@@ -37,7 +37,7 @@ def sync_and_execute(ip_address, port_number, local_directory, remote_directory,
         rsync_command_2 = [
             "rsync", "-avz", "--no-perms", "-e",
             ssh_command_base,
-            f"root@{ip_address}:{remote_directory}/output", f"{local_directory}"
+            f"root@{ip_address}:{remote_directory}/{batch_name}/output", f"{local_directory}/{batch_name}"
         ]
         
         print("==============================")
@@ -86,4 +86,4 @@ if __name__ == "__main__":
     else:
         save_inputs(ip_address, port_number, local_directory, batch_name, is_eric)
         
-        sync_and_execute(ip_address, port_number, local_directory, remote_directory, remote_command)
+        sync_and_execute(ip_address, port_number, local_directory, remote_directory, remote_command, batch_name)
