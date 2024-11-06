@@ -5,10 +5,11 @@ import json
 
 def sync_and_execute(ip_address, port_number, local_directory, remote_directory, remote_command):
     try:
+        ssh_command_base = f"ssh -i ~/.ssh/vast_ai -p {port_number}" if is_eric else f"ssh -p {port_number}"
         # Step 1: Rsync from local to remote
         rsync_command_1 = [
             "rsync", "-avz", "--no-perms", "--no-owner", "--no-group", "-e",
-            f"ssh -p {port_number}",
+            ssh_command_base,
             f"{local_directory}/input", f"root@{ip_address}:{remote_directory}"
         ]
         
@@ -18,10 +19,7 @@ def sync_and_execute(ip_address, port_number, local_directory, remote_directory,
         subprocess.run(rsync_command_1, check=True)
 
         # Step 2: Run a process on the remote machine via SSH
-        ssh_command = [
-            "ssh", "-p", str(port_number), f"root@{ip_address}",
-            remote_command
-        ]
+        ssh_command = ssh_command_base.split() + [f"root@{ip_address}", remote_command]
         
         print("==============================")
         print(f"Running command: {' '.join(ssh_command)}")
@@ -38,7 +36,7 @@ def sync_and_execute(ip_address, port_number, local_directory, remote_directory,
         # Step 3: Rsync from remote back to local
         rsync_command_2 = [
             "rsync", "-avz", "--no-perms", "-e",
-            f"ssh -p {port_number}",
+            ssh_command_base,
             f"root@{ip_address}:{remote_directory}/output", f"{local_directory}"
         ]
         
@@ -71,7 +69,7 @@ def save_inputs(ip_address, port_number, local_directory, batch_name, is_eric):
 
 if __name__ == "__main__":
     previous_inputs = load_previous_inputs()
-    default_value = previous_inputs.get('is_eric', 'n')
+    default_value = "y" if previous_inputs.get('is_eric', False) else "n"
     user_input = input(f"Are you Eric? (y/n) [{default_value}]: ") or default_value
     is_eric = user_input.lower() == 'y'
     local_directory = (input(f"Enter the local directory root batch path [{previous_inputs.get('local_directory', '')}]: ") or previous_inputs.get('local_directory', '')).rstrip('/')
