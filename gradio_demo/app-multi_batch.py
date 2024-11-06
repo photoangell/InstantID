@@ -419,9 +419,9 @@ def run_batch(config, pipe):
     generate_image_params = config['generate_image_params']
     
     # Set Paths for batch-specific folders
-    passenger_batch_dir = "workspace" / "img" / batch_name / "input" / "passenger"
-    reference_batch_dir = "workspace" / "img" / batch_name / "input" / "reference"
-    output_batch_dir = "workspace" / "img" / batch_name / "output"
+    passenger_batch_dir = Path("/workspace") / "img" / batch_name / "input" / "passenger"
+    reference_batch_dir = Path("/workspace") / "img" / batch_name / "input" / "reference"
+    output_batch_dir = Path("/workspace") / "img" / batch_name / "output"
 
     # Step 1: Check and create batch directories if they don't exist
     passenger_batch_dir.mkdir(parents=True, exist_ok=True)
