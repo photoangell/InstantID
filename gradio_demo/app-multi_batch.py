@@ -383,6 +383,8 @@ def main(batch_name, pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enab
             pipe.scheduler.config
         )
 
+    pipe.enable_model_cpu_offload()
+    pipe.cuda()
     pipe.load_ip_adapter_instantid(face_adapter)
     # load and disable LCM
     pipe.load_lora_weights("latent-consistency/lcm-lora-sdxl")
