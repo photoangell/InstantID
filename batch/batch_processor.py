@@ -6,6 +6,21 @@ import json
 def sync_and_execute(ip_address, port_number, local_directory, remote_directory, remote_command, batch_name):
     try:
         ssh_command_base = f"ssh -i ~/.ssh/vast_ai -p {port_number}" if is_eric else f"ssh -p {port_number}"
+        
+        ssh_command = ssh_command_base.split() + [f"root@{ip_address}", "mkdir -p /workspace/img"]
+        
+        print("==============================")
+        print(f"Running command: {' '.join(ssh_command)}")
+        print("==============================")
+        try:
+            # Run the command, check=True will cause an exception if exit code is not 0
+            subprocess.run(ssh_command, check=True)
+            print("Script ran successfully.")
+        except subprocess.CalledProcessError as e:
+            # Handle the error if the script exits with a non-zero status
+            print(f"Script failed with exit code {e.returncode}")
+            sys.exit()
+        
         # Step 1: Rsync from local to remote
         rsync_command_1 = [
             "rsync", "-avz", "--no-perms", "--no-owner", "--no-group", "-e",
