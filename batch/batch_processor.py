@@ -47,7 +47,6 @@ def sync_and_execute(ip_address, port_number, local_directory, remote_directory,
         print(f"Running command: {' '.join(ssh_command)}")
         print("==============================")
         try:
-                
             main_process = do_batch(ssh_command)
 
             # Start the rsync file syncing in a separate thread with the specified interval
@@ -59,29 +58,12 @@ def sync_and_execute(ip_address, port_number, local_directory, remote_directory,
 
             # Ensure the rsync thread stops if the main process ends unexpectedly
             rsync_thread.join()
-
-
-            # # Run the command, check=True will cause an exception if exit code is not 0
-            # main_thread = threading.Thread(target=do_batch, args=(ssh_command,))
-            # main_thread.start()
-
-            # # Start the rsync file syncing in another thread
-            # rsync_thread = threading.Thread(target=download_results, args=(rsync_command_2,))
-            # rsync_thread.start()
-
-            # # Optionally, join the threads if you want to wait for them to complete (main thread in particular)
-            # main_thread.join()
-            # rsync_thread.join()
             
             print("Script ran successfully.")
         except subprocess.CalledProcessError as e:
             # Handle the error if the script exits with a non-zero status
             print(f"Script failed with exit code {e.returncode}")
             sys.exit()
-
-
-
-
     except subprocess.CalledProcessError as e:
         print("==============================")
         print(f"An error occurred while running the command: {e}")
@@ -98,17 +80,8 @@ def download_results(rsync_command_2, main_process):
     subprocess.run(rsync_command_2)
     print("Final rsync complete; stopping rsync loop.")
     
-    # while True:
-    #     # Rsync from remote back to local
-    #     print("==============================")
-    #     print(f"Running command: {' '.join(rsync_command_2)}")
-    #     print("==============================")
-    #     subprocess.run(rsync_command_2, check=True)
-    #     time.sleep(15)
-    
 def do_batch(ssh_command):
     return subprocess.Popen(ssh_command)
-
 
 def load_previous_inputs():
     try:
@@ -139,7 +112,6 @@ if __name__ == "__main__":
     remote_directory = "/workspace/img"
     remote_command = "python /workspace/InstantID/gradio_demo/app-multi_batch.py --batch_name " + batch_name
  
-
     if not os.path.isdir(local_directory):
         print("==============================")
         print("Error: The specified local directory does not exist.")
