@@ -453,6 +453,7 @@ def run_batch(config, pipe):
         
         passenger_filename = passenger_image.stem
         #deepface
+        print(f"Processing deepface image {image_index}: {passenger_image}")
         analyzer = DeepFaceAnalyzer(passenger_image)
         analyzer.analyze()
         prompt = analyzer.format_text_with_results(base_prompt)
