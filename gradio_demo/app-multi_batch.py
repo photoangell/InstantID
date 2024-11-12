@@ -44,6 +44,8 @@ from controlnet_util import openpose, get_depth_map, get_canny_image
 
 import gradio as gr
 
+from analyzers.deepface_analyzer import DeepFaceAnalyzer
+import gc
 
 # global variable
 MAX_SEED = np.iinfo(np.int32).max
@@ -442,12 +444,22 @@ def run_batch(config, pipe):
     if not passenger_images or not reference_images:
         raise ValueError("Ensure both passenger and reference directories contain images.")
 
+    base_prompt = generate_image_params.get('prompt', '')
+
     image_index = 1
     for passenger_image in passenger_images:
         if not passenger_image.is_file():
             continue  # Skip if it's not a file
         
         passenger_filename = passenger_image.stem
+        #deepface
+        analyzer = DeepFaceAnalyzer(passenger_image)
+        analyzer.analyze()
+        prompt = analyzer.format_text_with_results(base_prompt)
+        
+        del analyzer  # Remove the reference
+        gc.collect()
+ 
         for reference_image in reference_images:
             if not reference_image.is_file():
                 continue  # Skip if it's not a file
@@ -461,7 +473,7 @@ def run_batch(config, pipe):
                     pipe = pipe,
                     face_image_path=str(passenger_image),
                     pose_image_path=str(reference_image),
-                    prompt=generate_image_params.get('prompt', ''),
+                    prompt=prompt,
                     negative_prompt=generate_image_params.get('negative_prompt', ''),
                     style_name=generate_image_params.get('style_name', ''),
                     num_steps=generate_image_params.get('num_steps', 30),
