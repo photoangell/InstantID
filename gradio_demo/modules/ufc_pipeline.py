@@ -205,7 +205,136 @@ def apply_style(
     p, n = styles.get(style_name, styles[DEFAULT_STYLE_NAME])
     return p.replace("{prompt}", positive), n + " " + negative
 
+
 def generate_image(
+    pipe,
+    face_image_path,
+    pose_image_path,
+    prompt,
+    negative_prompt,
+    style_name,
+    num_steps,
+    identitynet_strength_ratio,
+    adapter_strength_ratio,
+    pose_strength,
+    canny_strength,
+    depth_strength,
+    controlnet_selection,
+    guidance_scale,
+    seed,
+    scheduler,
+    enable_LCM,
+    enhance_face_region,
+    progress=gr.Progress(track_tqdm=True),
+):
+    if enable_LCM:
+        pipe.scheduler = LCMScheduler.from_config(pipe.scheduler.config)
+        pipe.enable_lora()
+    else:
+        pipe.disable_lora()
+        scheduler_class_name = scheduler.split("-")[0]
+        
+        add_kwargs = {}
+        if len(scheduler.split("-")) > 1:
+            add_kwargs["use_karras_sigmas"] = True
+        if len(scheduler.split("-")) > 2:
+            add_kwargs["algorithm_type"] = "sde-dpmsolver++"
+        scheduler = getattr(diffusers, scheduler_class_name)
+        pipe.scheduler = scheduler.from_config(pipe.scheduler.config, **add_kwargs)
+
+    if face_image_path is None:
+        raise gr.Error(f"Cannot find any input face image! Please upload the face image")
+
+    if prompt is None:
+        prompt = "a person"
+
+    face_image = load_image(face_image_path)
+    face_image = resize_img(face_image, max_side=1024)
+    face_image_cv2 = convert_from_image_to_cv2(face_image)
+    height, width, _ = face_image_cv2.shape
+
+    # Extract face features
+    face_info = app.get(face_image_cv2)
+    if len(face_info) == 0:
+        raise gr.Error(f"Unable to detect a face in the image. Please upload a different photo with a clear face.")
+
+    face_info = sorted(face_info, key=lambda x: (x['bbox'][2] - x['bbox'][0]) * (x['bbox'][3] - x['bbox'][1]))[-1]
+    face_emb = face_info["embedding"]
+    face_kps = draw_kps(convert_from_cv2_to_image(face_image_cv2), face_info["kps"])
+    img_controlnet = face_image
+    
+    if pose_image_path is not None:
+        pose_image = load_image(pose_image_path)
+        pose_image = resize_img(pose_image, max_side=1024)
+        img_controlnet = pose_image
+        pose_image_cv2 = convert_from_image_to_cv2(pose_image)
+
+        face_info = app.get(pose_image_cv2)
+
+        if len(face_info) == 0:
+            raise gr.Error(
+                f"Cannot find any face in the reference image! Please upload another person image"
+            )
+
+        face_info = face_info[-1]
+        face_kps = draw_kps(pose_image, face_info["kps"])
+
+        width, height = face_kps.size
+
+    if enhance_face_region:
+        control_mask = np.zeros([height, width, 3])
+        x1, y1, x2, y2 = face_info["bbox"]
+        x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+        control_mask[y1:y2, x1:x2] = 255
+        control_mask = Image.fromarray(control_mask.astype(np.uint8))
+    else:
+        control_mask = None
+
+    if len(controlnet_selection) > 0:
+        controlnet_scales = {
+            "pose": pose_strength,
+            "canny": canny_strength,
+            "depth": depth_strength,
+        }
+        pipe.controlnet = MultiControlNetModel(
+            [controlnet_identitynet] + [controlnet_map[s] for s in controlnet_selection]
+        )
+        control_scales = [float(identitynet_strength_ratio)] + [
+            controlnet_scales[s] for s in controlnet_selection
+        ]
+        control_images = [face_kps] + [
+            controlnet_map_fn[s](img_controlnet).resize((width, height))
+            for s in controlnet_selection
+        ]
+    else:
+        pipe.controlnet = controlnet_identitynet
+        control_scales = float(identitynet_strength_ratio)
+        control_images = face_kps
+
+    seed_to_use = randomize_seed_fn(seed, seed == -1)
+    generator = torch.Generator(device=device).manual_seed(seed_to_use)
+
+    print("Start inference...")
+    print(f"[Debug] Prompt: {prompt}, \n[Debug] Neg Prompt: {negative_prompt}")
+
+    pipe.set_ip_adapter_scale(adapter_strength_ratio)
+    images = pipe(
+        prompt=prompt,
+        negative_prompt=negative_prompt,
+        image_embeds=face_emb,
+        image=control_images,
+        control_mask=control_mask,
+        controlnet_conditioning_scale=control_scales,
+        num_inference_steps=num_steps,
+        guidance_scale=guidance_scale,
+        height=height,
+        width=width,
+        generator=generator,
+    ).images
+
+    return images[0], seed_to_use
+
+def generate_image_old(
     pipe,
     face_image_path,
     pose_image_path,
@@ -510,13 +639,53 @@ def run_batch(config, pipe):
             except Exception as e:
                 print(f"Error processing passenger image {passenger_image} with reference image {reference_image}: {e}")
 
-if __name__ == "__main__":
-# Set up argument parsing for command-line use
-    parser = argparse.ArgumentParser(description="Run InstantID batch processing.")
-    parser.add_argument('--batch_name', type=str, required=True, help='The batch directory name for processing')
+# if __name__ == "__main__":
+# # Set up argument parsing for command-line use
+#     parser = argparse.ArgumentParser(description="Run InstantID batch processing.")
+#     parser.add_argument('--batch_name', type=str, required=True, help='The batch directory name for processing')
 
-    args = parser.parse_args()
+#     args = parser.parse_args()
     
-    # Pass the arguments to main()
-    main(batch_name=args.batch_name)
+#     # Pass the arguments to main()
+#     main(batch_name=args.batch_name)
 
+
+
+def initialize_pipeline(pretrained_model_name_or_path):
+    if pretrained_model_name_or_path.endswith((".ckpt", ".safetensors")):
+        scheduler_kwargs = hf_hub_download(
+            repo_id="wangqixun/YamerMIX_v8",
+            subfolder="scheduler",
+            filename="scheduler_config.json",
+        )
+        tokenizers, text_encoders, unet, _, vae = load_models_xl(
+            pretrained_model_name_or_path=pretrained_model_name_or_path,
+            scheduler_name=None,
+            weight_dtype=dtype,
+        )
+        scheduler = EulerDiscreteScheduler.from_config(scheduler_kwargs)
+        pipe = StableDiffusionXLInstantIDPipeline(
+            vae=vae,
+            text_encoder=text_encoders[0],
+            text_encoder_2=text_encoders[1],
+            tokenizer=tokenizers[0],
+            tokenizer_2=tokenizers[1],
+            unet=unet,
+            scheduler=scheduler,
+            controlnet=[controlnet_identitynet],
+        ).to(device)
+    else:
+        pipe = StableDiffusionXLInstantIDPipeline.from_pretrained(
+            pretrained_model_name_or_path,
+            controlnet=[controlnet_identitynet],
+            torch_dtype=dtype,
+            safety_checker=None,
+            feature_extractor=None,
+        ).to(device)
+        pipe.scheduler = EulerDiscreteScheduler.from_config(pipe.scheduler.config)
+
+    pipe.load_ip_adapter_instantid("checkpoints/ip-adapter.bin")
+    pipe.load_lora_weights("latent-consistency/lcm-lora-sdxl")
+    pipe.disable_lora()
+
+    return pipe
