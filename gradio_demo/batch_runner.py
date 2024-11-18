@@ -2,7 +2,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from image_pipeline import initialize_pipeline, generate_image, get_torch_device
+from modules.image_pipeline import initialize_pipeline, generate_image, get_torch_device
 import gc
 
 
