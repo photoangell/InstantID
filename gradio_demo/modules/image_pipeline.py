@@ -35,7 +35,7 @@ from diffusers.utils import load_image
 from diffusers.models import ControlNetModel
 from diffusers.pipelines.controlnet.multicontrolnet import MultiControlNetModel
 from diffusers.schedulers import EulerDiscreteScheduler
-
+from diffusers.schedulers import LCMScheduler
 
 from huggingface_hub import hf_hub_download
 
