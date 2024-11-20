@@ -343,11 +343,12 @@ def generate_image(
     return images[0], seed_to_use #, gr.update(visible=True)
 
 def main(batch_name, pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=False):
-    print('Pipeline building...')
+    print(f'Pipeline building...{pretrained_model_name_or_path}')
     
     if pretrained_model_name_or_path.endswith(
         ".ckpt"
     ) or pretrained_model_name_or_path.endswith(".safetensors"):
+        print("Loading from SAFETensors checkpoint...")
         scheduler_kwargs = hf_hub_download(
             repo_id="wangqixun/YamerMIX_v8",
             subfolder="scheduler",
@@ -373,6 +374,7 @@ def main(batch_name, pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enab
         ).to(device)
 
     else:
+        print("Loading from Hugging Face model...")
         pipe = StableDiffusionXLInstantIDPipeline.from_pretrained(
             pretrained_model_name_or_path,
             controlnet=[controlnet_identitynet],
