@@ -12,6 +12,7 @@ PROJECT_ROOT = SCRIPT_DIR.parent  # or .resolve().parents[n] for n levels up
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
     
+sys.path.append("/workspace/InstantID")    
 print (f"script path is {SCRIPT_DIR}, project root is {PROJECT_ROOT}")
 
 from typing import Tuple
