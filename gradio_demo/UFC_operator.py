@@ -12,17 +12,50 @@ print('Pipeline building...')
 pretrained_model_name_or_path = "wangqixun/YamerMIX_v8"
 pipe = initialize_pipeline(pretrained_model_name_or_path)
 
-def analyze_person(input_image, reference_image, gender, race, hair_length):
-    # Here you would add your image analysis logic
-    generate_image
+def call_image_process(input_image, reference_image, gender, race, hair_length):
     
-    return f"Analysis Results:\nGender: {gender}\nRace: {race}\nHair Length: {hair_length}"
+    prompt = f"A photo of a {gender}, of race {race}, with hair length {hair_length}."
+    negative_prompt= "lowres, low quality, worst quality:1.2), (text:1.2), Cartoon, illustration, drawing, sketch, painting, anime, (blurry:2.0), out of focus, grainy, pixelated, low resolution, deformed, distorted, unnatural, artificial"
+    style_name = ""
+    num_steps = 8
+    identitynet_strength_ratio = 0.8
+    adapter_strength_ratio = 0.8
+    pose_strength = 0.4
+    canny_strength = 0.4
+    depth_strength = 0.4
+    controlnet_selection = ["pose", "depth"]
+    guidance_scale = 0
+    seed = 572504474
+    scheduler = "EulerDiscreteScheduler"
+    enable_LCM = True
+    enhance_face_region = True
+
+    
+    return generate_image(pipe,
+            input_image,
+            reference_image,
+            prompt,
+            negative_prompt,
+            style_name,
+            num_steps,
+            identitynet_strength_ratio,
+            adapter_strength_ratio,
+            pose_strength,
+            canny_strength,
+            depth_strength,
+            controlnet_selection,
+            guidance_scale,
+            seed,
+            scheduler,
+            enable_LCM,
+            enhance_face_region)
+     
 
 # Define input components
 with gr.Blocks() as demo:
     with gr.Row():
-        input_image = gr.Image(label="Upload Person Image")
-        reference_image = gr.Image(label="Upload Reference Image")
+        input_image = gr.Image(label="Upload Person Image", type="filepath")
+        reference_image = gr.Image(label="Upload Reference Image", type="filepath")
     
     with gr.Row():
         gender = gr.Radio(
@@ -47,7 +80,7 @@ with gr.Blocks() as demo:
                 
     submit_btn = gr.Button("Analyze")
     submit_btn.click(
-        fn=analyze_person,
+        fn=call_image_process,
         inputs=[input_image, reference_image, gender, race, hair_length],
         outputs=gallery
     )
