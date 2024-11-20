@@ -460,8 +460,8 @@ def run_batch(config, pipe):
         # analyzer.analyze()
         # prompt = analyzer.format_text_with_results(base_prompt)
         
-        del analyzer  # Remove the reference
-        gc.collect()
+        # del analyzer  # Remove the reference
+        # gc.collect()
  
         for reference_image in reference_images:
             if not reference_image.is_file():
