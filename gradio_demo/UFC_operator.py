@@ -14,6 +14,8 @@ pipe = initialize_pipeline(pretrained_model_name_or_path)
 
 def analyze_person(input_image, reference_image, gender, race, hair_length):
     # Here you would add your image analysis logic
+    generate_image
+    
     return f"Analysis Results:\nGender: {gender}\nRace: {race}\nHair Length: {hair_length}"
 
 # Define input components
@@ -40,12 +42,14 @@ with gr.Blocks() as demo:
         )
     
     output = gr.Textbox(label="Analysis Results")
-    
+    with gr.Column():
+        gallery = gr.Image(label="Generated Images")
+                
     submit_btn = gr.Button("Analyze")
     submit_btn.click(
         fn=analyze_person,
         inputs=[input_image, reference_image, gender, race, hair_length],
-        outputs=output
+        outputs=gallery
     )
 
 if __name__ == "__main__":
