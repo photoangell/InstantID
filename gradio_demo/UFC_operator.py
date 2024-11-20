@@ -5,7 +5,12 @@ import sys
 from pathlib import Path
 from modules.image_pipeline import initialize_pipeline, generate_image
 
+sys.path.append('./')
+print('Pipeline building...')
 
+# Initialize pipeline
+pretrained_model_name_or_path = "wangqixun/YamerMIX_v8"
+pipe = initialize_pipeline(pretrained_model_name_or_path)
 
 def analyze_person(input_image, reference_image, gender, race, hair_length):
     # Here you would add your image analysis logic
