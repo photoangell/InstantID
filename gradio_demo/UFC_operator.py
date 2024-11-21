@@ -82,7 +82,7 @@ with gr.Blocks() as demo:
     submit_btn.click(
         fn=call_image_process,
         inputs=[input_image, reference_image, gender, race, hair_length],
-        outputs=gallery
+        outputs=[gallery, seed]
     )
 
 if __name__ == "__main__":
