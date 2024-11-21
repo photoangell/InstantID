@@ -6,6 +6,7 @@ from pathlib import Path
 from modules.image_pipeline import initialize_pipeline, generate_image
 
 sys.path.append('./')
+print (f"arg status {sys.argv}, {arg.no_gpu}")
 print('Pipeline building...')
 
 # Initialize pipeline
@@ -88,4 +89,9 @@ with gr.Blocks() as demo:
     )
 
 if __name__ == "__main__":
+    # Set up argument parsing for command-line use
+    parser = argparse.ArgumentParser(description="Run InstantID batch processing.")
+    parser.add_argument('--no-gpu', type=bool, required=False, help='Run without GPU support', default=False)
+
+    args = parser.parse_args()
     demo.launch(share=True)
