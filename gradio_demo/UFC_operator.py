@@ -11,7 +11,6 @@ print('Pipeline building...')
 # Initialize pipeline
 pretrained_model_name_or_path = "wangqixun/YamerMIX_v8"
 pipe = initialize_pipeline(pretrained_model_name_or_path)
-seed_used = 0
 
 def call_image_process(input_image, reference_image, gender, race, hair_length):
     
@@ -79,6 +78,7 @@ with gr.Blocks() as demo:
     output = gr.Textbox(label="Analysis Results")
     with gr.Column():
         gallery = gr.Image(label="Generated Images")
+        seed_used = gr.Textbox(label="Seed Used")
                 
     submit_btn = gr.Button("Analyze")
     submit_btn.click(
