@@ -32,7 +32,7 @@ def call_image_process(input_image, reference_image, gender, race, hair_length):
     enhance_face_region = True
 
     
-    return generate_image(pipe,
+    [image, seed_used] = generate_image(pipe,
             input_image,
             reference_image,
             prompt,
@@ -51,6 +51,7 @@ def call_image_process(input_image, reference_image, gender, race, hair_length):
             enable_LCM,
             enhance_face_region)
      
+    return image, seed_used 
 
 # Define input components
 with gr.Blocks() as demo:
