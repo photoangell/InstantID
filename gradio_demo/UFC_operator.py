@@ -14,7 +14,7 @@ pipe = initialize_pipeline(pretrained_model_name_or_path)
 
 def call_image_process(input_image, reference_image, gender, race, hair_length):
     
-    prompt = f"A photo of a {gender}, of race {race}, with hair length {hair_length}."
+    prompt = f"{race} {gender}, {hair_length} hair, realistic, studio quality photograph, physically fit, healthy, serious, tough, determined, clear focus, transparent background"
     negative_prompt= "lowres, low quality, worst quality:1.2), (text:1.2), Cartoon, illustration, drawing, sketch, painting, anime, (blurry:2.0), out of focus, grainy, pixelated, low resolution, deformed, distorted, unnatural, artificial"
     style_name = ""
     num_steps = 8
