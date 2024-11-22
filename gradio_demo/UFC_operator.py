@@ -2,14 +2,24 @@ import gradio as gr
 import json
 import sys
 from pathlib import Path
-from modules.image_pipeline import initialize_pipeline, generate_image
+import os
+import platform
+
+def is_wsl():
+    if "microsoft" in platform.uname().release.lower():
+        return True
+    return False
+
+pretrained_model_name_or_path = "wangqixun/YamerMIX_v8"
+
+if not is_wsl():
+    from modules.image_pipeline import initialize_pipeline, generate_image
+    pipe = initialize_pipeline(pretrained_model_name_or_path)
+else:
+    print("Running on WSL; skipping image_pipeline imports.")
 
 sys.path.append('./')
 print('Pipeline building...')
-
-# Initialize pipeline
-pretrained_model_name_or_path = "wangqixun/YamerMIX_v8"
-pipe = initialize_pipeline(pretrained_model_name_or_path)
 
 def call_image_process(input_image, reference_image, gender, race, hair_length):
     
