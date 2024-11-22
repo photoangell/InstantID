@@ -39,27 +39,32 @@ def call_image_process(input_image, reference_image, gender, race, hair_length):
     enable_LCM = True
     enhance_face_region = True
 
-    
-    [image, seed_used] = generate_image(pipe,
-            input_image,
-            reference_image,
-            prompt,
-            negative_prompt,
-            style_name,
-            num_steps,
-            identitynet_strength_ratio,
-            adapter_strength_ratio,
-            pose_strength,
-            canny_strength,
-            depth_strength,
-            controlnet_selection,
-            guidance_scale,
-            seed,
-            scheduler,
-            enable_LCM,
-            enhance_face_region)
-     
-    return [image], seed_used 
+    images = []
+    seeds_used = []
+    for _ in range(4):
+        [image, seed_used] = generate_image(pipe,
+                input_image,
+                reference_image,
+                prompt,
+                negative_prompt,
+                style_name,
+                num_steps,
+                identitynet_strength_ratio,
+                adapter_strength_ratio,
+                pose_strength,
+                canny_strength,
+                depth_strength,
+                controlnet_selection,
+                guidance_scale,
+                seed,
+                scheduler,
+                enable_LCM,
+                enhance_face_region)
+        images.append(image) 
+        seeds_used.append(seed_used)
+        
+    seeds_string = ", ".join(map(str, seeds_used)) 
+    return images, seeds_string 
 
 # Define input components
 with gr.Blocks() as demo:
@@ -89,13 +94,13 @@ with gr.Blocks() as demo:
         
         with gr.Column():
             gallery = gr.Gallery(label="Generated Images", columns=2)
-            seed_used = gr.Textbox(label="Seed Used")
+            seeds_used = gr.Textbox(label="Seed Used")
     
     
     submit_btn.click(
         fn=call_image_process,
         inputs=[input_image, reference_image, gender, race, hair_length],
-        outputs=[gallery, seed_used]
+        outputs=[gallery, seeds_used]
     )
 
 if __name__ == "__main__":
