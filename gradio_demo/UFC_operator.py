@@ -66,32 +66,32 @@ with gr.Blocks() as demo:
     with gr.Row():
         with gr.Column():
             input_image = gr.Image(label="Upload Person Image", type="filepath")
-            reference_image = gr.Image(label="Upload Reference Image", type="filepath")
+            with gr.Accordion(open=False, label="Reference Image"):
+                reference_image = gr.Image(label="Upload Reference Image", type="filepath")
+            gender = gr.Radio(
+                choices=["male", "female", "not specified"],
+                label="Gender",
+                value="not specified"
+            )
+            race = gr.Radio(
+                choices=["white", "black", "arabic", "asian", "oriental"],
+                label="Race",
+                value="white"
+            )
+            hair_length = gr.Radio(
+                choices=["long", "medium", "short", "none"],
+                label="Hair Length",
+                value="medium"
+            )
+            with gr.Accordion(open=False, label="Advanced Options"):
+                prompt = gr.Textbox(f"{race} {gender}, {hair_length} hair, realistic, studio quality photograph, physically fit, healthy, serious, tough, determined, clear focus, transparent background")
+            submit_btn = gr.Button("Analyze")
+        
         with gr.Column():
             gallery = gr.Image(label="Generated Images")
             seed_used = gr.Textbox(label="Seed Used")
     
-    with gr.Row():
-        gender = gr.Radio(
-            choices=["male", "female", "not specified"],
-            label="Gender",
-            value="not specified"
-        )
-        race = gr.Radio(
-            choices=["white", "black", "arabic", "asian", "oriental"],
-            label="Race",
-            value="white"
-        )
-        hair_length = gr.Radio(
-            choices=["long", "medium", "short", "none"],
-            label="Hair Length",
-            value="medium"
-        )
     
-    output = gr.Textbox(label="Analysis Results")
-        
-                
-    submit_btn = gr.Button("Analyze")
     submit_btn.click(
         fn=call_image_process,
         inputs=[input_image, reference_image, gender, race, hair_length],
