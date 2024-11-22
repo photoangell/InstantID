@@ -34,7 +34,7 @@ def call_image_process(input_image, reference_image, gender, race, hair_length):
     depth_strength = 0.4
     controlnet_selection = ["pose", "depth"]
     guidance_scale = 0
-    seed = 572504474
+    seed = -1
     scheduler = "EulerDiscreteScheduler"
     enable_LCM = True
     enhance_face_region = True
