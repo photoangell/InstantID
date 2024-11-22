@@ -71,7 +71,7 @@ with gr.Blocks() as demo:
             gender = gr.Radio(
                 choices=["male", "female", "not specified"],
                 label="Gender",
-                value="not specified"
+                value="male"
             )
             race = gr.Radio(
                 choices=["white", "black", "arabic", "asian", "oriental"],
@@ -84,11 +84,11 @@ with gr.Blocks() as demo:
                 value="medium"
             )
             with gr.Accordion(open=False, label="Advanced Options"):
-                prompt = gr.Textbox(f"{race} {gender}, {hair_length} hair, realistic, studio quality photograph, physically fit, healthy, serious, tough, determined, clear focus, transparent background")
+                prompt = gr.Textbox(label="prompt", value="{race} {gender}, {hair_length} hair, realistic, studio quality photograph, physically fit, healthy, serious, tough, determined, clear focus, transparent background")
             submit_btn = gr.Button("Analyze")
         
         with gr.Column():
-            gallery = gr.Image(label="Generated Images")
+            gallery = gr.Gallery(label="Generated Images").style(grid=[2])
             seed_used = gr.Textbox(label="Seed Used")
     
     
