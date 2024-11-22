@@ -6,7 +6,7 @@ from pathlib import Path
 from modules.image_pipeline import initialize_pipeline, generate_image
 
 sys.path.append('./')
-print (f"arg status {sys.argv}, {arg.no_gpu}")
+print (f"arg status {sys.argv}, {args.no_gpu}")
 print('Pipeline building...')
 
 # Initialize pipeline
