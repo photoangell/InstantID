@@ -64,8 +64,12 @@ def call_image_process(input_image, reference_image, gender, race, hair_length):
 # Define input components
 with gr.Blocks() as demo:
     with gr.Row():
-        input_image = gr.Image(label="Upload Person Image", type="filepath")
-        reference_image = gr.Image(label="Upload Reference Image", type="filepath")
+        with gr.Column():
+            input_image = gr.Image(label="Upload Person Image", type="filepath")
+            reference_image = gr.Image(label="Upload Reference Image", type="filepath")
+        with gr.Column():
+            gallery = gr.Image(label="Generated Images")
+            seed_used = gr.Textbox(label="Seed Used")
     
     with gr.Row():
         gender = gr.Radio(
@@ -85,9 +89,7 @@ with gr.Blocks() as demo:
         )
     
     output = gr.Textbox(label="Analysis Results")
-    with gr.Column():
-        gallery = gr.Image(label="Generated Images")
-        seed_used = gr.Textbox(label="Seed Used")
+        
                 
     submit_btn = gr.Button("Analyze")
     submit_btn.click(
@@ -97,4 +99,7 @@ with gr.Blocks() as demo:
     )
 
 if __name__ == "__main__":
-    demo.launch(share=True)
+    if is_wsl():
+        demo.launch()
+    else:
+        demo.launch(share=True)
