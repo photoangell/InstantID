@@ -88,7 +88,7 @@ with gr.Blocks() as demo:
             submit_btn = gr.Button("Analyze")
         
         with gr.Column():
-            gallery = gr.Gallery(label="Generated Images").style(grid=[2])
+            gallery = gr.Gallery(label="Generated Images", columns=2)
             seed_used = gr.Textbox(label="Seed Used")
     
     
