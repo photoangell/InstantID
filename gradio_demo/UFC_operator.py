@@ -21,9 +21,9 @@ else:
 sys.path.append('./')
 print('Pipeline building...')
 
-def call_image_process(input_image, reference_image, gender, race, hair_length):
+def call_image_process(input_image, reference_image, gender, race, hair_length, prompt):
     
-    prompt = f"{race} {gender}, {hair_length} hair, realistic, studio quality photograph, physically fit, healthy, serious, tough, determined, clear focus, transparent background"
+    formatted_prompt = prompt.format(gender=gender, race=race, hair_length=hair_length)
     negative_prompt= "lowres, low quality, worst quality:1.2), (text:1.2), Cartoon, illustration, drawing, sketch, painting, anime, (blurry:2.0), out of focus, grainy, pixelated, low resolution, deformed, distorted, unnatural, artificial"
     style_name = ""
     num_steps = 8
@@ -45,7 +45,7 @@ def call_image_process(input_image, reference_image, gender, race, hair_length):
         [image, seed_used] = generate_image(pipe,
                 input_image,
                 reference_image,
-                prompt,
+                formatted_prompt,
                 negative_prompt,
                 style_name,
                 num_steps,
@@ -99,7 +99,7 @@ with gr.Blocks() as demo:
     
     submit_btn.click(
         fn=call_image_process,
-        inputs=[input_image, reference_image, gender, race, hair_length],
+        inputs=[input_image, reference_image, gender, race, hair_length, prompt],
         outputs=[gallery, seeds_used]
     )
 
