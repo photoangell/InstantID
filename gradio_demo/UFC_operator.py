@@ -22,14 +22,9 @@ sys.path.append('./')
 print('Pipeline building...')
 
 def call_image_process(input_image, reference_image, gender, race, hair_length, prompt):
-    
     gender_text = "person" if gender == "ambiguous" else gender
-    if hair_length == "none":
-        hair_length_text = "bald head"
-    else:
-        hair_length_text = f"{hair_length} hair"
         
-    formatted_prompt = prompt.format(gender=gender_text, race=race, hair_length=hair_length_text)
+    formatted_prompt = prompt.format(gender=gender_text, race=race, hair_length=hair_length)
     negative_prompt= "lowres, low quality, worst quality:1.2), (text:1.2), Cartoon, illustration, drawing, sketch, painting, anime, (blurry:2.0), out of focus, grainy, pixelated, low resolution, deformed, distorted, unnatural, artificial"
     style_name = ""
     num_steps = 30
@@ -85,19 +80,19 @@ with gr.Blocks() as demo:
             
             gr.Markdown("# Step 2: Select Attributes")
             gender = gr.Radio(
-                choices=["male", "female", "ambiguous"],
+                choices=["male", "female", "androgynous"],
                 label="Gender",
                 value="male"
             )
             race = gr.Radio(
-                choices=["white", "black", "arabic", "asian", "oriental"],
+                choices=["white", "black", "latino", "middle eastern", "east asian", "south asian", "indigenous", "mixed"],
                 label="Race",
                 value="white"
             )
             hair_length = gr.Radio(
-                choices=["long", "medium", "short", "none"],
+                choices=["long hair", "shoulder length hair", "short hair", "curly hair", "afro hair", "dreadlocks", "braided hair", "shaved head", "closely cropped hair", "bald", "headscarf", "turban"],
                 label="Hair Length",
-                value="medium"
+                value="short hair"
             )
             with gr.Accordion(open=False, label="Advanced Options"):
                 prompt = gr.Textbox(label="prompt", value="{race} {gender}, {hair_length}, realistic, studio quality photograph, physically fit, healthy, serious, tough, determined, clear focus, transparent background")
