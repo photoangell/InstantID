@@ -22,6 +22,7 @@ sys.path.append('./')
 print('Pipeline building...')
 
 def call_image_process(input_image, reference_image, gender, race, hair_length, prompt):
+    
     gender_text = "person" if gender == "ambiguous" else gender
     if hair_length == "none":
         hair_length_text = "bald head"
@@ -46,7 +47,7 @@ def call_image_process(input_image, reference_image, gender, race, hair_length, 
 
     images = []
     seeds_used = []
-    for _ in range(4):
+    for _ in range(1):
         [image, seed_used] = generate_image(pipe,
                 input_image,
                 reference_image,
