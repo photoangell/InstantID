@@ -75,9 +75,14 @@ def call_image_process(input_image, reference_image, gender, race, hair_length, 
 with gr.Blocks() as demo:
     with gr.Row():
         with gr.Column():
+            gr.Markdown("# Step 1: Upload Images")
             input_image = gr.Image(label="Upload Person Image", type="filepath")
+            
+            gr.Markdown("## Step 1a: Select reference image (on startup only)")
             with gr.Accordion(open=False, label="Reference Image"):
                 reference_image = gr.Image(label="Upload Reference Image", type="filepath")
+            
+            gr.Markdown("# Step 2: Select Attributes")
             gender = gr.Radio(
                 choices=["male", "female", "ambiguous"],
                 label="Gender",
@@ -95,9 +100,12 @@ with gr.Blocks() as demo:
             )
             with gr.Accordion(open=False, label="Advanced Options"):
                 prompt = gr.Textbox(label="prompt", value="{race} {gender}, {hair_length}, realistic, studio quality photograph, physically fit, healthy, serious, tough, determined, clear focus, transparent background")
-            submit_btn = gr.Button("Analyze")
+                
+            gr.Markdown("# Step 3: Analyze")
+            submit_btn = gr.Button("Process Image")
         
         with gr.Column():
+            gr.Markdown("# Step 4: Choose from Results")
             gallery = gr.Gallery(label="Generated Images", columns=2)
             seeds_used = gr.Textbox(label="Seed Used")
     
