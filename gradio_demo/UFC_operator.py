@@ -95,7 +95,7 @@ with gr.Blocks() as demo:
                 value="short hair"
             )
             with gr.Accordion(open=False, label="Advanced Options"):
-                prompt = gr.Textbox(label="prompt", value="{race} {gender}, {hair_length}, realistic, studio quality photograph, physically fit, healthy, serious, tough, determined, clear focus, transparent background")
+                prompt = gr.Textbox(label="prompt", value="{race} {gender}, {hair_length}, realistic, studio quality photograph, physically fit, healthy, serious, tough, determined, clear focus, transparent background, eyes looking at the camera")
                 
             gr.Markdown("# Step 3: Analyze")
             submit_btn = gr.Button("Process Image")
