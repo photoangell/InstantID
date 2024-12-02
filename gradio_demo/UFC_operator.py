@@ -102,7 +102,7 @@ with gr.Blocks() as demo:
         
         with gr.Column():
             gr.Markdown("# Step 4: Choose from Results")
-            gallery = gr.Gallery(label="Generated Images", columns=2)
+            gallery = gr.Gallery(label="Generated Images", columns=2, format="jpeg")
             seeds_used = gr.Textbox(label="Seed Used")
     
     
