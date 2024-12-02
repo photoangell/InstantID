@@ -96,11 +96,11 @@ with gr.Blocks() as demo:
             )
             with gr.Accordion(open=False, label="Advanced Options"):
                 prompt = gr.Textbox(label="prompt", value="{race} {gender}, {hair_length}, realistic, studio quality photograph, physically fit, healthy, serious, tough, determined, clear focus, transparent background, eyes looking at the camera")
-                
-            gr.Markdown("# Step 3: Analyze")
-            submit_btn = gr.Button("Process Image")
+                 
         
         with gr.Column():
+            gr.Markdown("# Step 3: Analyze")
+            submit_btn = gr.Button("Process Image")
             gr.Markdown("# Step 4: Choose from Results")
             gallery = gr.Gallery(label="Generated Images", columns=2, format="jpeg")
             seeds_used = gr.Textbox(label="Seed Used")
