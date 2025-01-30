@@ -117,6 +117,12 @@ with gr.Blocks() as demo:
                         "DPMSolverMultistepScheduler",
                         "DPMSolverMultistepScheduler-Karras",
                         "DPMSolverMultistepScheduler-Karras-SDE",
+                        "DDIMInverseScheduler",
+                        "DDIMParallelScheduler",
+                        "DDIMScheduler",
+                        "DPMSolverMultistepInverseScheduler",
+                        "DPMSolverMultistepScheduler",
+                        "DPMSolverSinglestepScheduler"                        
                     ]
                 scheduler = gr.Dropdown(
                         label="Schedulers",
