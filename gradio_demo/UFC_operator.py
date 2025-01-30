@@ -55,7 +55,7 @@ def call_image_process(input_image, reference_image, gender, race, hair_length, 
         seeds_used.append(seed_used)
         
     seeds_string = ", ".join(map(str, seeds_used)) 
-    return images, seeds_string 
+    return images[0], seeds_string 
 
 # Define input components
 MAX_SEED = np.iinfo(np.int32).max
@@ -181,14 +181,15 @@ with gr.Blocks() as demo:
             gr.Markdown("# Step 3: Analyze")
             submit_btn = gr.Button("Process Image")
             gr.Markdown("# Step 4: Choose from Results")
-            gallery = gr.Gallery(label="Generated Images", columns=2, format="jpeg")
+            # gallery = gr.Gallery(label="Generated Images", columns=2, format="jpeg")
+            outputimage = gr.Image(label="Generated Image")
             seeds_used = gr.Textbox(label="Seed Used")
     
     
     submit_btn.click(
         fn=call_image_process,
         inputs=[input_image, reference_image, gender, race, hair_length, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed],
-        outputs=[gallery, seeds_used]
+        outputs=[outputimage, seeds_used]
     )
 
 if __name__ == "__main__":
