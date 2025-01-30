@@ -90,7 +90,7 @@ with gr.Blocks() as demo:
             with gr.Accordion(open=False, label="Advanced Options"):
                 prompt = gr.Textbox(label="prompt",
                                     info="Give simple prompt is enough to achieve good face fidelity", 
-                                    value="{race} {gender}, {hair_length}, realistic, studio quality photograph, physically fit, healthy, serious, tough, determined, clear focus, transparent background, eyes looking at the camera")
+                                    value="{race} {gender}, {hair_length}, realistic, studio quality photograph, physically fit, healthy, serious, tough, determined, clear focus, transparent background, eyes looking at the camera, MMA fighter")
                 negative_prompt = gr.Textbox(
                         label="Negative Prompt",
                         value="lowres, low quality, worst quality:1.2), (text:1.2), Cartoon, illustration, drawing, sketch, painting, anime, (blurry:2.0), out of focus, grainy, pixelated, low resolution, deformed, distorted, unnatural, artificial",
@@ -108,7 +108,7 @@ with gr.Blocks() as demo:
                         minimum=0.1,
                         maximum=20.0,
                         step=0.1,
-                        value=0.0 if enable_lcm_arg else 5.0,
+                        value=0.0 if enable_lcm_arg else 7.0,
                     )
                 schedulers = [
                         "DEISMultistepScheduler",
@@ -182,7 +182,7 @@ with gr.Blocks() as demo:
             submit_btn = gr.Button("Process Image")
             gr.Markdown("# Step 4: Choose from Results")
             # gallery = gr.Gallery(label="Generated Images", columns=2, format="jpeg")
-            outputimage = gr.Image(label="Generated Image")
+            outputimage = gr.Image(label="Generated Image", show_loading=True)
             seeds_used = gr.Textbox(label="Seed Used")
     
     
