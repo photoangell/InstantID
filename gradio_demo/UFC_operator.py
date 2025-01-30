@@ -3,6 +3,7 @@ import json
 import sys
 from pathlib import Path
 import os
+import numpy as np
 import platform
 
 def is_wsl():
@@ -21,22 +22,11 @@ else:
 sys.path.append('./')
 print('Pipeline building...')
 
-def call_image_process(input_image, reference_image, gender, race, hair_length, prompt):
+def call_image_process(input_image, reference_image, gender, race, hair_length, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed):
     gender_text = "person" if gender == "ambiguous" else gender
         
     formatted_prompt = prompt.format(gender=gender_text, race=race, hair_length=hair_length)
-    negative_prompt= "lowres, low quality, worst quality:1.2), (text:1.2), Cartoon, illustration, drawing, sketch, painting, anime, (blurry:2.0), out of focus, grainy, pixelated, low resolution, deformed, distorted, unnatural, artificial"
     style_name = ""
-    num_steps = 30
-    identitynet_strength_ratio = 0.8
-    adapter_strength_ratio = 0.8
-    pose_strength = 0.4
-    canny_strength = 0.4
-    depth_strength = 0.4
-    controlnet_selection = ["pose", "depth"]
-    guidance_scale = 5
-    seed = -1
-    scheduler = "EulerDiscreteScheduler"
     enable_LCM = False
     enhance_face_region = True
 
@@ -68,6 +58,9 @@ def call_image_process(input_image, reference_image, gender, race, hair_length, 
     return images, seeds_string 
 
 # Define input components
+MAX_SEED = np.iinfo(np.int32).max
+enable_lcm_arg = False
+
 with gr.Blocks() as demo:
     with gr.Row():
         with gr.Column():
@@ -95,9 +88,89 @@ with gr.Blocks() as demo:
                 value="short hair"
             )
             with gr.Accordion(open=False, label="Advanced Options"):
-                prompt = gr.Textbox(label="prompt", value="{race} {gender}, {hair_length}, realistic, studio quality photograph, physically fit, healthy, serious, tough, determined, clear focus, transparent background, eyes looking at the camera")
-                 
-        
+                prompt = gr.Textbox(label="prompt",
+                                    info="Give simple prompt is enough to achieve good face fidelity", 
+                                    value="{race} {gender}, {hair_length}, realistic, studio quality photograph, physically fit, healthy, serious, tough, determined, clear focus, transparent background, eyes looking at the camera")
+                negative_prompt = gr.Textbox(
+                        label="Negative Prompt",
+                        value="lowres, low quality, worst quality:1.2), (text:1.2), Cartoon, illustration, drawing, sketch, painting, anime, (blurry:2.0), out of focus, grainy, pixelated, low resolution, deformed, distorted, unnatural, artificial",
+                    )
+
+                num_steps = gr.Slider(
+                        label="Number of sample steps",
+                        minimum=1,
+                        maximum=100,
+                        step=1,
+                        value=5 if enable_lcm_arg else 30
+                    )
+                guidance_scale = gr.Slider(
+                        label="Guidance scale",
+                        minimum=0.1,
+                        maximum=20.0,
+                        step=0.1,
+                        value=0.0 if enable_lcm_arg else 5.0,
+                    )
+                schedulers = [
+                        "DEISMultistepScheduler",
+                        "HeunDiscreteScheduler",
+                        "EulerDiscreteScheduler",
+                        "DPMSolverMultistepScheduler",
+                        "DPMSolverMultistepScheduler-Karras",
+                        "DPMSolverMultistepScheduler-Karras-SDE",
+                    ]
+                scheduler = gr.Dropdown(
+                        label="Schedulers",
+                        choices=schedulers,
+                        value="EulerDiscreteScheduler",
+                    )
+                identitynet_strength_ratio = gr.Slider(
+                    label="IdentityNet strength (for fidelity)",
+                    minimum=0,
+                    maximum=1.5,
+                    step=0.05,
+                    value=0.80,
+                )
+                adapter_strength_ratio = gr.Slider(
+                    label="Image adapter strength (for detail)",
+                    minimum=0,
+                    maximum=1.5,
+                    step=0.05,
+                    value=0.80,
+                )
+                with gr.Row():
+                    controlnet_selection = gr.CheckboxGroup(
+                        ["pose", "canny", "depth"], label="Controlnet", value=["pose", "depth"],
+                        info="Use pose for skeleton inference, canny for edge detection, and depth for depth map estimation. You can try all three to control the generation process"
+                    )
+                    pose_strength = gr.Slider(
+                        label="Pose strength",
+                        minimum=0,
+                        maximum=1.5,
+                        step=0.05,
+                        value=0.40,
+                    )
+                    canny_strength = gr.Slider(
+                        label="Canny strength",
+                        minimum=0,
+                        maximum=1.5,
+                        step=0.05,
+                        value=0.40,
+                    )
+                    depth_strength = gr.Slider(
+                        label="Depth strength",
+                        minimum=0,
+                        maximum=1.5,
+                        step=0.05,
+                        value=0.40,
+                    ) 
+                seed = gr.Slider(
+                        label="Seed",
+                        info="use -1 for random seed",
+                        minimum=-1,
+                        maximum=MAX_SEED,
+                        step=1,
+                        value=-1,
+                    )
         with gr.Column():
             gr.Markdown("# Step 3: Analyze")
             submit_btn = gr.Button("Process Image")
@@ -108,7 +181,7 @@ with gr.Blocks() as demo:
     
     submit_btn.click(
         fn=call_image_process,
-        inputs=[input_image, reference_image, gender, race, hair_length, prompt],
+        inputs=[input_image, reference_image, gender, race, hair_length, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed],
         outputs=[gallery, seeds_used]
     )
 
