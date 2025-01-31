@@ -182,7 +182,7 @@ with gr.Blocks() as demo:
             submit_btn = gr.Button("Process Image")
             gr.Markdown("# Step 4: Choose from Results")
             # gallery = gr.Gallery(label="Generated Images", columns=2, format="jpeg")
-            outputimage = gr.Image(label="Generated Image", show_loading=True)
+            outputimage = gr.Image(label="Generated Image")
             seeds_used = gr.Textbox(label="Seed Used")
     
     
