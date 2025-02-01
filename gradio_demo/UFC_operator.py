@@ -126,10 +126,10 @@ with gr.Blocks() as demo:
                 label="Hair Length",
                 value="short hair"
             )
-            prompt = gr.Textarea(label="prompt",
+            prompt = gr.TextArea(label="prompt",
                                     info="Give simple prompt is enough to achieve good face fidelity", 
                                     value="{race} {gender}, {hair_length}, realistic, studio quality photograph, physically fit, healthy, serious, tough, determined, clear focus, transparent background, eyes looking at the camera, MMA fighter")
-            negative_prompt = gr.Textarea(
+            negative_prompt = gr.TextArea(
                         label="Negative Prompt",
                         value="lowres, low quality, worst quality:1.2), (text:1.2), Cartoon, illustration, drawing, sketch, painting, anime, (blurry:2.0), out of focus, grainy, pixelated, low resolution, deformed, distorted, unnatural, artificial",
                     )
