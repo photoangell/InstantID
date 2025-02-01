@@ -131,7 +131,7 @@ with gr.Blocks() as demo:
                                     value="{race} {gender}, {hair_length}, realistic, studio-quality photograph, physically fit, muscular, intense expression, determined, direct eye contact, eyes looking at the camera, flat lighting, ring light, evenly lit face, soft light, no shadows, beauty dish lighting, ultra-detailed, high contrast, sharp focus, mma fighter, strong")
             negative_prompt = gr.TextArea(
                         label="Negative Prompt",
-                        value="(lowres, low quality, worst quality:1.2), (text, artifacts:1.2), cartoon, illustration, anime, blurry, out of focus, grainy, pixelated, low resolution, deformed, distorted, unnatural, exaggerated, harsh shadows, dramatic lighting, low key lighting, underexposed, moody lighting, high contrast shadows, dark face")
+                        value="(lowres, low quality, worst quality:1.2), (text, artifacts:1.2), cartoon, illustration, anime, blurry, out of focus, grainy, pixelated, low resolution, deformed, distorted, unnatural, exaggerated, harsh shadows, dramatic lighting, low key lighting, underexposed, moody lighting, high contrast shadows, dark face, (smiling, teeth:2)")
             with gr.Accordion(open=False, label="Advanced Options"):
                 num_steps = gr.Slider(
                         label="Number of sample steps",
