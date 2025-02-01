@@ -60,7 +60,7 @@ def call_image_process(input_image, reference_image, gender, race, hair_length, 
     sharpened_image = fast_unsharp_mask(images[0], sigma=1.5, strength=1.5)
     return sharpened_image, seeds_string 
 
-def fast_unsharp_mask(image, sigma=1.5, strength=1.5):
+def fast_unsharp_mask(image, sigma=1.2, strength=1.5, threshold=8):
     """
     Applies a fast unsharp mask using OpenCV.
     
@@ -69,7 +69,7 @@ def fast_unsharp_mask(image, sigma=1.5, strength=1.5):
     :param strength: Sharpening strength
     :return: Sharpened image as a PIL Image
     """
-    # ✅ Convert from PIL to NumPy
+    # ✅ Convert from PIL to NumPy if needed
     if isinstance(image, Image.Image):  
         image = np.array(image)  # Convert PIL to NumPy
 
@@ -83,13 +83,18 @@ def fast_unsharp_mask(image, sigma=1.5, strength=1.5):
     # ✅ Apply Gaussian Blur
     blurred = cv2.GaussianBlur(image, (0, 0), sigma)
 
-    # ✅ Apply Unsharp Mask
+    # ✅ Compute sharpened image
     sharpened = cv2.addWeighted(image, 1.0 + strength, blurred, -strength, 0)
+
+    # ✅ Apply thresholding to preserve soft areas (e.g., skin)
+    if threshold > 0:
+        low_contrast_mask = np.abs(image - blurred) < threshold
+        sharpened[low_contrast_mask] = image[low_contrast_mask]
 
     # ✅ Convert back to RGB for correct color display
     sharpened = cv2.cvtColor(sharpened, cv2.COLOR_BGR2RGB)
 
-    # ✅ Convert back to PIL Image for compatibility with SD pipeline
+    # ✅ Convert back to PIL Image for compatibility with Stable Diffusion
     return Image.fromarray(sharpened)
 
 # Define input components
