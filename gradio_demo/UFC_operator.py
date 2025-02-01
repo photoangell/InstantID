@@ -24,7 +24,7 @@ else:
 sys.path.append('./')
 print('Pipeline building...')
 
-def call_image_process(input_image, reference_image, gender, race, hair_length, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed):
+def call_image_process(input_image, reference_image, gender, race, hair_length, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold):
     gender_text = "person" if gender == "ambiguous" else gender
         
     formatted_prompt = prompt.format(gender=gender_text, race=race, hair_length=hair_length)
@@ -57,7 +57,7 @@ def call_image_process(input_image, reference_image, gender, race, hair_length, 
         seeds_used.append(seed_used)
         
     seeds_string = ", ".join(map(str, seeds_used)) 
-    sharpened_image = fast_unsharp_mask(images[0], sigma=1.5, strength=1.5)
+    sharpened_image = fast_unsharp_mask(images[0], sigma, strength, threshold)
     return sharpened_image, seeds_string 
 
 def fast_unsharp_mask(image, sigma=1.2, strength=1.5, threshold=8):
@@ -107,10 +107,9 @@ with gr.Blocks() as demo:
             gr.Markdown("# Step 1: Upload Images")
             input_image = gr.Image(label="Upload Person Image", type="filepath")
             
-            gr.Markdown("## Step 1a: Select reference image (on startup only)")
-            with gr.Accordion(open=False, label="Reference Image"):
-                reference_image = gr.Image(label="Upload Reference Image", type="filepath")
-            
+            #gr.Markdown("## Step 1a: Select reference image (on startup only)")
+            #with gr.Accordion(open=False, label="Reference Image"):
+                
             gr.Markdown("# Step 2: Select Attributes")
             gender = gr.Radio(
                 choices=["male", "female", "androgynous"],
@@ -217,6 +216,14 @@ with gr.Blocks() as demo:
                         step=1,
                         value=-1,
                     )
+                with gr.Row():
+                    gr.Markdown("# Unsharp Masking")
+                    gr.Slider(label="Sigma", info="Blur Intensity. Controls the smoothness of the blurred image used for sharpening. Lower values keep fine details; higher values create a more pronounced effect.", minimum=0.8, maximum=3.0, step=0.1, value=1.2)
+                    gr.Slider(label="Strength", info="Sharpening Intensity. Controls how much the sharpened image is amplified. Too high values can cause halos or unnatural contrast.", minimum=1, maximum=2.5, step=0.1, value=1.5)
+                    gr.Slider(label="Threshold", info="Detail Preservation. Prevents sharpening in areas with low contrast (e.g., skin, smooth surfaces). Higher values avoid over-sharpening noise but may reduce effect in subtle areas.", minimum=0, maximum=15, step=1, value=5
+                    
+                reference_image = gr.Image(label="Upload Reference Image for pose", type="filepath")
+                
         with gr.Column():
             gr.Markdown("# Step 3: Analyze")
             submit_btn = gr.Button("Process Image")
@@ -228,7 +235,7 @@ with gr.Blocks() as demo:
     
     submit_btn.click(
         fn=call_image_process,
-        inputs=[input_image, reference_image, gender, race, hair_length, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed],
+        inputs=[input_image, reference_image, gender, race, hair_length, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold],
         outputs=[outputimage, seeds_used]
     )
 
