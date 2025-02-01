@@ -128,11 +128,10 @@ with gr.Blocks() as demo:
             )
             prompt = gr.TextArea(label="prompt",
                                     info="Give simple prompt is enough to achieve good face fidelity", 
-                                    value="{race} {gender}, {hair_length}, realistic, studio-quality photograph, physically fit, muscular, intense expression, determined, direct eye contact, eyes looking at the camera, cinematic lighting, soft shadows, evenly lit, high detail, ultra-sharp, transparent background, mma fighter, strong")
+                                    value="{race} {gender}, {hair_length}, realistic, studio-quality photograph, physically fit, muscular, intense expression, determined, direct eye contact, eyes looking at the camera, flat lighting, ring light, evenly lit face, soft light, no shadows, beauty dish lighting, ultra-detailed, high contrast, sharp focus, mma fighter, strong")
             negative_prompt = gr.TextArea(
                         label="Negative Prompt",
-                        value="(lowres, low quality, worst quality:1.2), (text, artifacts:1.2), cartoon, illustration, anime, blurry, out of focus, grainy, pixelated, low resolution, deformed, distorted, unnatural, exaggerated, teeth showing, smile, redness, harsh shadows, underexposed, averted gaze, looking away, side profile"
-                    )
+                        value="(lowres, low quality, worst quality:1.2), (text, artifacts:1.2), cartoon, illustration, anime, blurry, out of focus, grainy, pixelated, low resolution, deformed, distorted, unnatural, exaggerated, harsh shadows, dramatic lighting, low key lighting, underexposed, moody lighting, high contrast shadows, dark face")
             with gr.Accordion(open=False, label="Advanced Options"):
                 num_steps = gr.Slider(
                         label="Number of sample steps",
@@ -146,7 +145,7 @@ with gr.Blocks() as demo:
                         minimum=0.1,
                         maximum=20.0,
                         step=0.1,
-                        value=0.0 if enable_lcm_arg else 7.0,
+                        value=0.0 if enable_lcm_arg else 3.5,
                     )
                 schedulers = [
                         "DEISMultistepScheduler",
@@ -186,7 +185,7 @@ with gr.Blocks() as demo:
                 )
                 with gr.Row():
                     controlnet_selection = gr.CheckboxGroup(
-                        ["pose", "canny", "depth"], label="Controlnet", value=["pose", "depth"],
+                        ["pose", "canny", "depth"], label="Controlnet", value=["pose"],
                         info="Use pose for skeleton inference, canny for edge detection, and depth for depth map estimation. You can try all three to control the generation process"
                     )
                     pose_strength = gr.Slider(
@@ -194,7 +193,7 @@ with gr.Blocks() as demo:
                         minimum=0,
                         maximum=1.5,
                         step=0.05,
-                        value=0.40,
+                        value=0.60,
                     )
                     canny_strength = gr.Slider(
                         label="Canny strength",
