@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 import os
 import numpy as np
+import cv2
 import platform
 
 def is_wsl():
@@ -55,7 +56,21 @@ def call_image_process(input_image, reference_image, gender, race, hair_length, 
         seeds_used.append(seed_used)
         
     seeds_string = ", ".join(map(str, seeds_used)) 
-    return images[0], seeds_string 
+    sharpened_image = fast_unsharp_mask(images[0], sigma=1.5, strength=1.5)
+    return sharpened_image, seeds_string 
+
+def fast_unsharp_mask(image, sigma=1.5, strength=1.5):
+    """
+    Applies a very fast unsharp mask to an image using OpenCV.
+    
+    :param image: Input image (numpy array, BGR format)
+    :param sigma: Blur intensity (higher = more smoothing)
+    :param strength: Sharpening strength (higher = more sharpening)
+    :return: Sharpened image
+    """
+    blurred = cv2.GaussianBlur(image, (0, 0), sigma)  # Apply Gaussian blur
+    sharpened = cv2.addWeighted(image, 1.0 + strength, blurred, -strength, 0)  # Unsharp mask
+    return sharpened
 
 # Define input components
 MAX_SEED = np.iinfo(np.int32).max
