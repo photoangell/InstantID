@@ -128,10 +128,10 @@ with gr.Blocks() as demo:
             )
             prompt = gr.TextArea(label="prompt",
                                     info="Give simple prompt is enough to achieve good face fidelity", 
-                                    value="{race} {gender}, {hair_length}, realistic, studio quality photograph, physically fit, healthy, serious, tough, determined, clear focus, transparent background, eyes looking at the camera, MMA fighter")
+                                    value="{race} {gender}, {hair_length}, realistic, studio-quality photograph, physically fit, muscular, intense expression, determined, direct eye contact, eyes looking at the camera, cinematic lighting, soft shadows, evenly lit, high detail, ultra-sharp, transparent background, mma fighter, strong")
             negative_prompt = gr.TextArea(
                         label="Negative Prompt",
-                        value="lowres, low quality, worst quality:1.2), (text:1.2), Cartoon, illustration, drawing, sketch, painting, anime, (blurry:2.0), out of focus, grainy, pixelated, low resolution, deformed, distorted, unnatural, artificial",
+                        value="(lowres, low quality, worst quality:1.2), (text, artifacts:1.2), cartoon, illustration, anime, blurry, out of focus, grainy, pixelated, low resolution, deformed, distorted, unnatural, exaggerated, teeth showing, smile, redness, harsh shadows, underexposed, averted gaze, looking away, side profile"
                     )
             with gr.Accordion(open=False, label="Advanced Options"):
                 num_steps = gr.Slider(
@@ -160,7 +160,10 @@ with gr.Blocks() as demo:
                         "DDIMScheduler",
                         "DPMSolverMultistepInverseScheduler",
                         "DPMSolverMultistepScheduler",
-                        "DPMSolverSinglestepScheduler"                        
+                        "DPMSolverSinglestepScheduler",
+                        "DPM++ 2M Karras",
+                        "DPM++ SDE Karras",
+                        "Euler a"                 
                     ]
                 scheduler = gr.Dropdown(
                         label="Schedulers",
