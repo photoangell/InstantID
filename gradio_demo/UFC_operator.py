@@ -5,6 +5,7 @@ from pathlib import Path
 import os
 import numpy as np
 import cv2
+from PIL import Image
 import platform
 
 def is_wsl():
@@ -61,16 +62,35 @@ def call_image_process(input_image, reference_image, gender, race, hair_length, 
 
 def fast_unsharp_mask(image, sigma=1.5, strength=1.5):
     """
-    Applies a very fast unsharp mask to an image using OpenCV.
+    Applies a fast unsharp mask using OpenCV.
     
-    :param image: Input image (numpy array, BGR format)
-    :param sigma: Blur intensity (higher = more smoothing)
-    :param strength: Sharpening strength (higher = more sharpening)
-    :return: Sharpened image
+    :param image: Input image (Stable Diffusion output - PIL Image)
+    :param sigma: Blur intensity
+    :param strength: Sharpening strength
+    :return: Sharpened image as a PIL Image
     """
-    blurred = cv2.GaussianBlur(image, (0, 0), sigma)  # Apply Gaussian blur
-    sharpened = cv2.addWeighted(image, 1.0 + strength, blurred, -strength, 0)  # Unsharp mask
-    return sharpened
+    # ✅ Convert from PIL to NumPy
+    if isinstance(image, Image.Image):  
+        image = np.array(image)  # Convert PIL to NumPy
+
+    # ✅ Ensure image is in uint8 format
+    if image.dtype != np.uint8:
+        image = (image * 255).astype(np.uint8)  # Normalize if needed
+
+    # ✅ Ensure image is in BGR format for OpenCV
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+
+    # ✅ Apply Gaussian Blur
+    blurred = cv2.GaussianBlur(image, (0, 0), sigma)
+
+    # ✅ Apply Unsharp Mask
+    sharpened = cv2.addWeighted(image, 1.0 + strength, blurred, -strength, 0)
+
+    # ✅ Convert back to RGB for correct color display
+    sharpened = cv2.cvtColor(sharpened, cv2.COLOR_BGR2RGB)
+
+    # ✅ Convert back to PIL Image for compatibility with SD pipeline
+    return Image.fromarray(sharpened)
 
 # Define input components
 MAX_SEED = np.iinfo(np.int32).max
