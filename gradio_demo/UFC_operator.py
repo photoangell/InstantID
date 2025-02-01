@@ -220,7 +220,7 @@ with gr.Blocks() as demo:
                     gr.Markdown("# Unsharp Masking")
                     gr.Slider(label="Sigma", info="Blur Intensity. Controls the smoothness of the blurred image used for sharpening. Lower values keep fine details; higher values create a more pronounced effect.", minimum=0.8, maximum=3.0, step=0.1, value=1.2)
                     gr.Slider(label="Strength", info="Sharpening Intensity. Controls how much the sharpened image is amplified. Too high values can cause halos or unnatural contrast.", minimum=1, maximum=2.5, step=0.1, value=1.5)
-                    gr.Slider(label="Threshold", info="Detail Preservation. Prevents sharpening in areas with low contrast (e.g., skin, smooth surfaces). Higher values avoid over-sharpening noise but may reduce effect in subtle areas.", minimum=0, maximum=15, step=1, value=5
+                    gr.Slider(label="Threshold", info="Detail Preservation. Prevents sharpening in areas with low contrast (e.g., skin, smooth surfaces). Higher values avoid over-sharpening noise but may reduce effect in subtle areas.", minimum=0, maximum=15, step=1, value=5)
                     
                 reference_image = gr.Image(label="Upload Reference Image for pose", type="filepath")
                 
