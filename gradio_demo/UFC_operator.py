@@ -24,10 +24,10 @@ else:
 sys.path.append('./')
 print('Pipeline building...')
 
-def call_image_process(input_image, reference_image, gender, race, hair_length, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold):
+def call_image_process(input_image, reference_image, age, gender, race, hair_length, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold):
     gender_text = "person" if gender == "ambiguous" else gender
         
-    formatted_prompt = prompt.format(gender=gender_text, race=race, hair_length=hair_length)
+    formatted_prompt = prompt.format(age=age, gender=gender_text, race=race, hair_length=hair_length)
     style_name = ""
     enable_LCM = False
     enhance_face_region = True
@@ -111,6 +111,8 @@ with gr.Blocks() as demo:
             #with gr.Accordion(open=False, label="Reference Image"):
                 
             gr.Markdown("# Step 2: Select Attributes")
+            age = gr.Slider(label="Age", minimum=18, maximum=80, step=1, value=35)
+            
             gender = gr.Radio(
                 choices=["male", "female", "androgynous"],
                 label="Gender",
@@ -128,7 +130,7 @@ with gr.Blocks() as demo:
             )
             prompt = gr.TextArea(label="prompt",
                                     info="Give simple prompt is enough to achieve good face fidelity", 
-                                    value="{race} {gender} MMA fighter, {hair_length}, physically fit, muscular, strong, intense expression, determined, direct eye contact, eyes looking at the camera, realistic, studio-quality photograph, flat lighting, ring light, evenly lit face, soft light, no shadows, beauty dish lighting, ultra-detailed, high contrast, sharp focus")
+                                    value="{age} year old {race} {gender} MMA fighter, {hair_length}, physically fit, muscular, strong, intense expression, determined, direct eye contact, eyes looking at the camera, realistic, studio-quality photograph, flat lighting, ring light, evenly lit face, soft light, no shadows, beauty dish lighting, ultra-detailed, high contrast, sharp focus")
             negative_prompt = gr.TextArea(
                         label="Negative Prompt",
                         value="(low quality, worst quality, lowres, low resolution, pixelated, grainy, blurry, out of focus:1.2), (text, artifacts:1.2), cartoon, illustration, anime, deformed, distorted, unnatural, exaggerated, (harsh shadows, high contrast shadows, dramatic lighting, low key lighting, underexposed, moody lighting), dark face, (smiling, teeth:2)")
@@ -236,7 +238,7 @@ with gr.Blocks() as demo:
     
     submit_btn.click(
         fn=call_image_process,
-        inputs=[input_image, reference_image, gender, race, hair_length, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold],
+        inputs=[input_image, reference_image, age, gender, race, hair_length, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold],
         outputs=[outputimage, seeds_used]
     )
 
