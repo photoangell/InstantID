@@ -187,7 +187,7 @@ with gr.Blocks() as demo:
                 )
                 with gr.Row():
                     controlnet_selection = gr.CheckboxGroup(
-                        ["pose", "canny", "depth"], label="Controlnet", value=["pose"],
+                        ["pose", "canny", "depth"], label="Controlnet", value=["depth"],
                         info="Use pose for skeleton inference, canny for edge detection, and depth for depth map estimation. You can try all three to control the generation process"
                     )
                     pose_strength = gr.Slider(
