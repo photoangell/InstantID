@@ -27,7 +27,7 @@ print('Pipeline building...')
 def call_image_process(input_image, reference_image, age, gender, race, hair_length, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold):
     gender_text = "person" if gender == "ambiguous" else gender
         
-    formatted_prompt = prompt.format(age=age, gender=gender_text, race=race, hair_length=hair_length)
+    formatted_prompt = prompt.format(age=str(age), gender=gender_text, race=race, hair_length=hair_length)
     style_name = ""
     enable_LCM = False
     enhance_face_region = True
