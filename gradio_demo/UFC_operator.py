@@ -7,6 +7,10 @@ import numpy as np
 import cv2
 from PIL import Image
 import platform
+import base64
+from openai import OpenAI
+
+client = OpenAI()
 
 def is_wsl():
     if "microsoft" in platform.uname().release.lower():
@@ -24,10 +28,78 @@ else:
 sys.path.append('./')
 print('Pipeline building...')
 
-def call_image_process(input_image, reference_image, age, gender, race, hair_length, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold):
+
+def encode_image(image_path):
+    """Encodes an image to a Base64 string."""
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode("utf-8")
+
+def analyze_image_with_gpt(image_path):
+    """
+    Analyzes an image using GPT-4-Turbo with vision.
+    
+    Args:
+        image_path (str): Path to the image file.
+    
+    Returns:
+        str: A structured, concise, and naturalistic Stable Diffusion prompt in the format:
+        "[age] years old [race] [gender descriptor] person, [head description]"
+    """
+    if not image_path:
+        return "No image provided."
+
+    base64_image = encode_image(image_path)
+
+    response = client.chat.completions.create(
+        model="gpt-4-turbo",
+        temperature=0.0,  # Reduce randomness for accuracy
+        top_p=0.1,  # Further controls randomness (optional)
+        max_tokens=100,  # Prevents excessive response length
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": (
+                            "Analyze the image and return a description in the exact following format:\n\n"
+                            "[age] years old [race] [gender descriptor] MMA fighter, [head description]\n\n"
+                            "Guidelines:\n"
+                            "- Replace [age] with the best guess in numbers.\n"
+                            "- Replace [race] with the most accurate ethnic descriptor based on facial features, skin tone, and hair type.\n"
+                            "  - Possible races: Caucasian, East Asian, South Asian, African, Hispanic, Middle Eastern, Native American, mixed race.\n"
+                            "- Do not assume race incorrectly; if uncertain, use 'ambiguous ethnicity'.\n"
+                            "- If gender is clear, use 'male' or 'female'. If ambiguous, use 'androgynous' or 'non-binary'.\n"
+                            "- For hair:\n"
+                            "  - If the person has visible hair, describe its length, texture, and color (e.g., 'short wavy brown hair').\n"
+                            "  - If the person is bald, replace '[head description]' with 'bald head'.\n"
+                            "  - If the person has a shaved head, use 'shaved head'.\n"
+                            "- If the head is covered (hat, hood, turban, hijab, helmet, etc.), describe the covering (e.g., 'wearing a black hijab').\n"
+                            "- Do not describe emotions, clothing (except head coverings), accessories, or background.\n"
+                            "- Keep the response short, structured, and natural for a Stable Diffusion prompt."
+                        )
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
+                    },
+                ],
+            }
+        ],
+    )
+
+    return response.choices[0].message.content  # Extract and return GPT's response
+
+# Gradio Interface
+def process_uploaded_image(image_path):
+    """Handles Gradio image upload and passes it to GPT Vision analysis."""
+    return analyze_image_with_gpt(image_path)
+
+def call_image_process(input_image, reference_image, age, gender, race, hair_length, gptvision_prompt, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold):
     gender_text = "person" if gender == "ambiguous" else gender
         
-    formatted_prompt = prompt.format(age=str(age), gender=gender_text, race=race, hair_length=hair_length)
+    #formatted_prompt = prompt.format(age=str(age), gender=gender_text, race=race, hair_length=hair_length)
+    formatted_prompt = gptvision_prompt + ", " + prompt
     style_name = ""
     enable_LCM = False
     enhance_face_region = True
@@ -128,9 +200,15 @@ with gr.Blocks() as demo:
                 label="Hair Length",
                 value="short hair"
             )
-            prompt = gr.TextArea(label="prompt",
+            with gr.Row():
+                gptvision_prompt = gr.Textbox(label= "GPT Vision Prompt",
+                                    info="AI analysis of input image",
+                                    value="{age} year old {race} {gender} MMA fighter, {hair_length}",
+                                    scale=4)
+                vision_analysis = gr.Button("Analyse Input Image", scale=1)
+            prompt = gr.TextArea(label="Secondary Prompt",
                                     info="Give simple prompt is enough to achieve good face fidelity", 
-                                    value="{age} year old {race} {gender} MMA fighter, {hair_length}, physically fit, muscular, strong, intense expression, determined, direct eye contact, eyes looking at the camera, realistic, studio-quality photograph, flat lighting, ring light, evenly lit face, soft light, no shadows, beauty dish lighting, ultra-detailed, high contrast, sharp focus")
+                                    value="physically fit, muscular, strong, intense expression, determined, direct eye contact, eyes looking at the camera, realistic, studio-quality photograph, flat lighting, ring light, evenly lit face, soft light, no shadows, beauty dish lighting, ultra-detailed, high contrast, sharp focus")
             negative_prompt = gr.TextArea(
                         label="Negative Prompt",
                         value="(low quality, worst quality, lowres, low resolution, pixelated, grainy, blurry, out of focus:1.2), (text, artifacts:1.2), cartoon, illustration, anime, deformed, distorted, unnatural, exaggerated, (harsh shadows, high contrast shadows, dramatic lighting, low key lighting, underexposed, moody lighting), dark face, (smiling, teeth:2)")
@@ -238,9 +316,11 @@ with gr.Blocks() as demo:
     
     submit_btn.click(
         fn=call_image_process,
-        inputs=[input_image, reference_image, age, gender, race, hair_length, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold],
+        inputs=[input_image, reference_image, age, gender, race, hair_length, gptvision_prompt, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold],
         outputs=[outputimage, seeds_used]
     )
+    
+    vision_analysis.click(fn=process_uploaded_image, inputs=input_image, outputs=gptvision_prompt)
 
 if __name__ == "__main__":
     if is_wsl():
