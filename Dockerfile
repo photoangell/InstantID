@@ -43,7 +43,7 @@ RUN git clone https://github.com/photoangell/InstantID.git \
     && python3 -m pip install --upgrade pip \
     && pip install -r InstantID/gradio_demo/requirements.txt \
     && pip install jupyter pickleshare mediapipe dropbox flask flask-restx opencv-python openai \
-    && pip install --upgrade huggingface-hub diffusers \
+    && pip install --upgrade huggingface-hub diffusers torch \
     && pip cache purge
 
 # Expose the Jupyter, gradio and flask port
