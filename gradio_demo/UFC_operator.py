@@ -346,7 +346,7 @@ with gr.Blocks() as demo:
         outputs=[outputimage, seeds_used]
     ).then(
         fn=update_gallery,
-        inputs=[outputimage, previous_images],
+        inputs=[outputimage, outputimage],
         outputs=[outputimage, previous_images]
     )
     
