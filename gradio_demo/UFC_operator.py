@@ -104,10 +104,10 @@ def update_gallery(new_image, current_image):
 
     if current_image is not None:
         image_buffer.append(current_image)  # Move old image to history
-        if len(image_buffer) > 6:  # Keep only last 6 images
+        if len(image_buffer) > 7:  # Keep only last 7 images
             image_buffer.pop(0)
 
-    return new_image, list(reversed(image_buffer))
+    return new_image, list(reversed(image_buffer[:-1]))
 
 
 def call_image_process(input_image, reference_image, age, gender, race, hair_length, manual_prompt, gptvision_prompt, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold, selected_tab):
