@@ -11,6 +11,7 @@ import base64
 from openai import OpenAI
 
 client = OpenAI()
+image_buffer = []
 
 def is_wsl():
     if "microsoft" in platform.uname().release.lower():
@@ -96,8 +97,21 @@ def process_uploaded_image(image_path):
     """Handles Gradio image upload and passes it to GPT Vision analysis."""
     return analyze_image_with_gpt(image_path)
 
+def update_gallery(new_image, current_image):
+    """Move the current image to the gallery before updating with new one."""
+    global image_buffer
+
+    if current_image is not None:
+        image_buffer.append(current_image)  # Move old image to history
+        if len(image_buffer) > 6:  # Keep only last 6 images
+            image_buffer.pop(0)
+
+    return new_image, image_buffer
+
+
 def call_image_process(input_image, reference_image, age, gender, race, hair_length, manual_prompt, gptvision_prompt, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold, selected_tab):
-        
+    add_image_to_gallery(outputimage)
+    
     if selected_tab == 2:
         formatted_prompt = gptvision_prompt + ", " + prompt
     else:
@@ -322,14 +336,19 @@ with gr.Blocks() as demo:
             submit_btn = gr.Button("Process Image")
             gr.Markdown("# Step 4: Result")
             # gallery = gr.Gallery(label="Generated Images", columns=2, format="jpeg")
-            outputimage = gr.Image(label="Generated Image")
+            outputimage = gr.Image(label="Generated Image", format="jpeg")
             seeds_used = gr.Textbox(label="Seed Used")
+            previous_images = gr.Gallery(label="Previous Images", columns=2, format="jpeg")
     
     
     submit_btn.click(
         fn=call_image_process,
         inputs=[input_image, reference_image, age, gender, race, hair_length, manual_prompt, gptvision_prompt, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold, selected_tab],
         outputs=[outputimage, seeds_used]
+    ).then(
+        fn=update_gallery,
+        inputs=[outputimage, previous_images],
+        outputs=[outputimage, previous_images]
     )
     
     vision_analysis.click(fn=process_uploaded_image, inputs=input_image, outputs=gptvision_prompt)
