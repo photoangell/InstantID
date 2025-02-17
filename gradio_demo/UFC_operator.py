@@ -102,7 +102,7 @@ def update_gallery(new_image, current_image):
     global image_buffer
 
     if current_image is not None:
-        image_buffer.append(current_image)  # Move old image to history
+        image_buffer.insert(0, current_image)  # Move old image to history
         if len(image_buffer) > 6:  # Keep only last 6 images
             image_buffer.pop(0)
 
