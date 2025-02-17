@@ -96,11 +96,13 @@ def process_uploaded_image(image_path):
     """Handles Gradio image upload and passes it to GPT Vision analysis."""
     return analyze_image_with_gpt(image_path)
 
-def call_image_process(input_image, reference_image, age, gender, race, hair_length, gptvision_prompt, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold):
-    gender_text = "person" if gender == "ambiguous" else gender
+def call_image_process(input_image, reference_image, age, gender, race, hair_length, manual_prompt, gptvision_prompt, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold, selected_tab):
         
-    #formatted_prompt = prompt.format(age=str(age), gender=gender_text, race=race, hair_length=hair_length)
-    formatted_prompt = gptvision_prompt + ", " + prompt
+    if selected_tab == 2:
+        formatted_prompt = gptvision_prompt + ", " + prompt
+    else:
+        gender_text = "person" if gender == "ambiguous" else gender
+        formatted_prompt = manual_prompt.format(age=str(age), gender=gender_text, race=race, hair_length=hair_length) + ", " + prompt
     style_name = ""
     enable_LCM = False
     enhance_face_region = True
@@ -175,6 +177,7 @@ MAX_SEED = np.iinfo(np.int32).max
 enable_lcm_arg = False
 
 with gr.Blocks() as demo:
+    selected_tab = gr.State(2)  
     with gr.Row():
         with gr.Column():
             gr.Markdown("# Step 1: Upload Images")
@@ -182,31 +185,39 @@ with gr.Blocks() as demo:
             
             #gr.Markdown("## Step 1a: Select reference image (on startup only)")
             #with gr.Accordion(open=False, label="Reference Image"):
-                
-            gr.Markdown("# Step 2: Select Attributes")
-            age = gr.Slider(label="Age", minimum=18, maximum=80, step=1, value=35)
             
-            gender = gr.Radio(
-                choices=["male", "female", "androgynous"],
-                label="Gender",
-                value="male"
-            )
-            race = gr.Radio(
-                choices=["white", "black", "latino", "middle eastern", "east asian", "south asian", "indigenous", "mixed"],
-                label="Race",
-                value="white"
-            )
-            hair_length = gr.Radio(
-                choices=["long hair", "shoulder length hair", "short hair", "curly hair", "afro hair", "dreadlocks", "braided hair", "shaved head", "closely cropped hair", "bald", "headscarf", "turban"],
-                label="Hair Length",
-                value="short hair"
-            )
-            with gr.Row():
-                gptvision_prompt = gr.Textbox(label="Person Description Prompt",
-                                    info="eg 40 years old Caucasian male MMA fighter, short wavy brown hair",
-                                    value="{age} year old {race} {gender} MMA fighter, {hair_length}",
-                                    scale=4)
-                vision_analysis = gr.Button("Analyse Input Image", scale=1)
+            gr.Markdown("# Step 2: Select Attributes")
+            with gr.Tabs(selected=2):
+                with gr.Tab(label="Manual Attributes", id=1) as tab1:
+                    age = gr.Slider(label="Age", minimum=18, maximum=80, step=1, value=35)
+                    
+                    gender = gr.Radio(
+                        choices=["male", "female", "androgynous"],
+                        label="Gender",
+                        value="male"
+                    )
+                    race = gr.Radio(
+                        choices=["white", "black", "latino", "middle eastern", "east asian", "south asian", "indigenous", "mixed"],
+                        label="Race",
+                        value="white"
+                    )
+                    hair_length = gr.Radio(
+                        choices=["long hair", "shoulder length hair", "short hair", "curly hair", "afro hair", "dreadlocks", "braided hair", "shaved head", "closely cropped hair", "bald", "headscarf", "turban"],
+                        label="Hair Length",
+                        value="short hair"
+                    )
+                    manual_prompt = gr.Textbox(label="prompt",
+                                    info="Give simple prompt is enough to achieve good face fidelity", 
+                                    value="{age} year old {race} {gender} MMA fighter, {hair_length}")
+                    
+                with gr.Tab(label="GPT Vision Analysis", id=2) as tab2:
+                    with gr.Row():
+                        gptvision_prompt = gr.Textbox(label="Person Description Prompt",
+                                            info="eg 40 years old Caucasian male MMA fighter, short wavy brown hair",
+                                            value="",
+                                            scale=4)
+                        vision_analysis = gr.Button("Analyse Input Image", scale=1)
+                
             prompt = gr.TextArea(label="Person Attributes Prompt",
                                     info="List physical attributes, expression & pose, photo style & lighting", 
                                     value="physically fit, muscular, strong, intense expression, determined, direct eye contact, eyes looking at the camera, realistic, studio-quality photograph, flat lighting, ring light, evenly lit face, soft light, no shadows, beauty dish lighting, ultra-detailed, high contrast, sharp focus")
@@ -317,12 +328,15 @@ with gr.Blocks() as demo:
     
     submit_btn.click(
         fn=call_image_process,
-        inputs=[input_image, reference_image, age, gender, race, hair_length, gptvision_prompt, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold],
+        inputs=[input_image, reference_image, age, gender, race, hair_length, manual_prompt, gptvision_prompt, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold, selected_tab],
         outputs=[outputimage, seeds_used]
     )
     
     vision_analysis.click(fn=process_uploaded_image, inputs=input_image, outputs=gptvision_prompt)
 
+    tab1.select(lambda: 1, outputs=selected_tab)
+    tab2.select(lambda: 2, outputs=selected_tab)
+    
 if __name__ == "__main__":
     if is_wsl():
         demo.launch()
