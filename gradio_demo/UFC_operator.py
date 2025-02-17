@@ -77,6 +77,7 @@ def analyze_image_with_gpt(image_path):
                             "- If the head is covered (hat, hood, turban, hijab, helmet, etc.), describe the covering (e.g., 'wearing a black hijab').\n"
                             "- Do not describe emotions, clothing (except head coverings), accessories, or background.\n"
                             "- Keep the response short, structured, and natural for a Stable Diffusion prompt."
+                            "- Do not end with a full stop or punctuation."
                         )
                     },
                     {
@@ -201,13 +202,13 @@ with gr.Blocks() as demo:
                 value="short hair"
             )
             with gr.Row():
-                gptvision_prompt = gr.Textbox(label= "GPT Vision Prompt",
-                                    info="AI analysis of input image",
+                gptvision_prompt = gr.Textbox(label="Person Description Prompt",
+                                    info="eg 40 years old Caucasian male MMA fighter, short wavy brown hair",
                                     value="{age} year old {race} {gender} MMA fighter, {hair_length}",
                                     scale=4)
                 vision_analysis = gr.Button("Analyse Input Image", scale=1)
-            prompt = gr.TextArea(label="Secondary Prompt",
-                                    info="Give simple prompt is enough to achieve good face fidelity", 
+            prompt = gr.TextArea(label="Person Attributes Prompt",
+                                    info="List physical attributes, expression & pose, photo style & lighting", 
                                     value="physically fit, muscular, strong, intense expression, determined, direct eye contact, eyes looking at the camera, realistic, studio-quality photograph, flat lighting, ring light, evenly lit face, soft light, no shadows, beauty dish lighting, ultra-detailed, high contrast, sharp focus")
             negative_prompt = gr.TextArea(
                         label="Negative Prompt",
