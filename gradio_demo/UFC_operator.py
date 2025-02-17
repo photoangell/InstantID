@@ -13,6 +13,13 @@ from openai import OpenAI
 client = OpenAI()
 image_buffer = []
 
+css = """
+.gradio-gallery {
+    overflow: hidden !important;
+    max-height: none !important;
+}
+"""
+
 def is_wsl():
     if "microsoft" in platform.uname().release.lower():
         return True
@@ -189,7 +196,7 @@ def fast_unsharp_mask(image, sigma=1.2, strength=1.5, threshold=8):
 MAX_SEED = np.iinfo(np.int32).max
 enable_lcm_arg = False
 
-with gr.Blocks() as demo:
+with gr.Blocks(css) as demo:
     selected_tab = gr.State(2)  
     with gr.Row():
         with gr.Column():
