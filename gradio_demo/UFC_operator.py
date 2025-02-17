@@ -242,20 +242,19 @@ with gr.Blocks() as demo:
                     )
                 schedulers = [
                         "DEISMultistepScheduler",
-                        "HeunDiscreteScheduler",
+                        #"HeunDiscreteScheduler", too slow
                         "EulerDiscreteScheduler",
                         "DPMSolverMultistepScheduler",
                         "DPMSolverMultistepScheduler-Karras",
                         "DPMSolverMultistepScheduler-Karras-SDE",
-                        "DDIMInverseScheduler",
+                        #"DDIMInverseScheduler", noise
                         "DDIMParallelScheduler",
                         "DDIMScheduler",
-                        "DPMSolverMultistepInverseScheduler",
-                        "DPMSolverMultistepScheduler",
+                        #"DPMSolverMultistepInverseScheduler", noise
                         "DPMSolverSinglestepScheduler",
-                        "DPM++ 2M Karras",
-                        "DPM++ SDE Karras",
-                        "Euler a"                 
+                        #"DPM++ 2M Karras",
+                        #"DPM++ SDE Karras",
+                        #"Euler a"                 
                     ]
                 scheduler = gr.Dropdown(
                         label="Schedulers",
