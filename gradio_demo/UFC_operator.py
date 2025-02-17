@@ -335,10 +335,11 @@ with gr.Blocks() as demo:
             gr.Markdown("# Step 3: Analyze")
             submit_btn = gr.Button("Process Image")
             gr.Markdown("# Step 4: Result")
-            # gallery = gr.Gallery(label="Generated Images", columns=2, format="jpeg")
+            gr.Markdown("## Generated Image")
             outputimage = gr.Image(label="Generated Image", format="jpeg")
             seeds_used = gr.Textbox(label="Seed Used")
-            previous_images = gr.Gallery(label="Previous Images", columns=2, format="jpeg", rows=3)
+            gr.Markdown("## Previous Images")
+            previous_images = gr.Gallery(columns=2, format="jpeg", rows=3)
     
     
     submit_btn.click(
