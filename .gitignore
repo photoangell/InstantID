@@ -167,3 +167,4 @@ models/
 
 gradio_cached_examples
 batch/previous_batch_inputs.json
+apikey.txt
