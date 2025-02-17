@@ -218,6 +218,7 @@ with gr.Blocks() as demo:
                                             scale=4)
                         vision_analysis = gr.Button("Analyse Input Image", scale=1)
                 
+            gr.Markdown("# Step 2a: Additional Prompts and Options")
             prompt = gr.TextArea(label="Person Attributes Prompt",
                                     info="List physical attributes, expression & pose, photo style & lighting", 
                                     value="physically fit, muscular, strong, intense expression, determined, direct eye contact, eyes looking at the camera, realistic, studio-quality photograph, flat lighting, ring light, evenly lit face, soft light, no shadows, beauty dish lighting, ultra-detailed, high contrast, sharp focus")
