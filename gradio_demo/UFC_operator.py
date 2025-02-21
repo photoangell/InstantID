@@ -12,7 +12,7 @@ from openai import OpenAI
 
 client = OpenAI()
 image_buffer = []
-
+new_image = None
 
 def is_wsl():
     if "microsoft" in platform.uname().release.lower():
@@ -98,16 +98,16 @@ def process_uploaded_image(image_path):
     """Handles Gradio image upload and passes it to GPT Vision analysis."""
     return analyze_image_with_gpt(image_path)
 
-def update_gallery(new_image, current_image):
-    """Move the current image to the gallery before updating with new one."""
+def update_gallery(new_image):
+    """Append the new image to the gallery while keeping only the last 7 images."""
     global image_buffer
 
-    if current_image is not None:
-        image_buffer.append(current_image)  # Move old image to history
-        if len(image_buffer) > 7:  # Keep only last 7 images
-            image_buffer.pop(0)
+    if new_image is not None:
+        image_buffer.append(new_image)  # Add new image to the gallery
+        if len(image_buffer) > 7:  # Keep only the last 7 images
+            image_buffer.pop(0)  # Remove the oldest image
 
-    return new_image, list(reversed(image_buffer[:-1]))
+    return list(reversed(image_buffer))  # Reverse to show the latest first
 
 
 def call_image_process(input_image, reference_image, age, gender, race, hair_length, manual_prompt, gptvision_prompt, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold, selected_tab):
@@ -335,21 +335,21 @@ with gr.Blocks() as demo:
             gr.Markdown("# Step 3: Analyze")
             submit_btn = gr.Button("Process Image")
             gr.Markdown("# Step 4: Result")
-            gr.Markdown("## Generated Image")
-            outputimage = gr.Image(label="Generated Image", format="jpeg")
+            gr.Markdown("## Generated Images")
+            #outputimage = gr.Image(label="Generated Image", format="jpeg")
             seeds_used = gr.Textbox(label="Seed Used")
-            gr.Markdown("## Previous Images")
+            #gr.Markdown("## Previous Images")
             previous_images = gr.Gallery(columns=2, format="jpeg", rows=3)
     
     
     submit_btn.click(
         fn=call_image_process,
         inputs=[input_image, reference_image, age, gender, race, hair_length, manual_prompt, gptvision_prompt, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold, selected_tab],
-        outputs=[outputimage, seeds_used]
+        outputs=[new_image, seeds_used]
     ).then(
         fn=update_gallery,
-        inputs=[outputimage, outputimage],
-        outputs=[outputimage, previous_images]
+        inputs=[new_image],
+        outputs=[previous_images]
     )
     
     vision_analysis.click(fn=process_uploaded_image, inputs=input_image, outputs=gptvision_prompt)
