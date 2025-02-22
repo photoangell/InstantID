@@ -109,8 +109,17 @@ def update_gallery(new_image):
 
     return list(reversed(image_buffer))  # Reverse to show the latest first
 
+def process_and_update_gallery(*args):
+    """Wrapper function to call call_image_process and update gallery."""
+    output_image, seeds_string = call_image_process(*args)  # Process image
+    updated_gallery = update_gallery(output_image)  # Update gallery with the new image
+    return updated_gallery, seeds_string  # Return both the gallery and seed string
 
 def call_image_process(input_image, reference_image, age, gender, race, hair_length, manual_prompt, gptvision_prompt, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold, selected_tab):
+    
+    if is_wsl():
+        seeds_string = 12567423
+        return input_image, seeds_string 
     
     if selected_tab == 2:
         formatted_prompt = gptvision_prompt + ", " + prompt
@@ -340,16 +349,12 @@ with gr.Blocks() as demo:
             seeds_used = gr.Textbox(label="Seed Used")
             #gr.Markdown("## Previous Images")
             previous_images = gr.Gallery(columns=2, format="jpeg", rows=3)
-    
+
     
     submit_btn.click(
-        fn=call_image_process,
+        fn=process_and_update_gallery,
         inputs=[input_image, reference_image, age, gender, race, hair_length, manual_prompt, gptvision_prompt, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold, selected_tab],
-        outputs=[new_image, seeds_used]
-    ).then(
-        fn=update_gallery,
-        inputs=[new_image],
-        outputs=[previous_images]
+        outputs=[previous_images, seeds_used]
     )
     
     vision_analysis.click(fn=process_uploaded_image, inputs=input_image, outputs=gptvision_prompt)
