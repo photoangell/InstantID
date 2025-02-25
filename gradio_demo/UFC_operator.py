@@ -13,6 +13,10 @@ from openai import OpenAI
 client = OpenAI()
 image_buffer = []
 new_image = None
+lcm_stored_values = {
+    True: {"num_steps": 10, "guidance_scale": 0.0},   # Default values when LCM is enabled
+    False: {"num_steps": 30, "guidance_scale": 3.5},  # Default values when LCM is disabled
+}
 
 def is_wsl():
     if "microsoft" in platform.uname().release.lower():
@@ -94,6 +98,16 @@ def analyze_image_with_gpt(image_path):
     return response.choices[0].message.content  # Extract and return GPT's response
 
 # Gradio Interface
+def update_sliders(enable_lcm, num_steps, guidance_scale):
+    """Update num_steps and guidance_scale while remembering previous values for each state."""
+    # Save the last used values for the previous state before switching
+    lcm_stored_values[not enable_lcm]["num_steps"] = num_steps
+    lcm_stored_values[not enable_lcm]["guidance_scale"] = guidance_scale
+
+    # Retrieve the stored values for the new state
+    return lcm_stored_values[enable_lcm]["num_steps"], lcm_stored_values[enable_lcm]["guidance_scale"]
+
+
 def process_uploaded_image(image_path):
     """Handles Gradio image upload and passes it to GPT Vision analysis."""
     return analyze_image_with_gpt(image_path)
@@ -115,7 +129,7 @@ def process_and_update_gallery(*args):
     updated_gallery = update_gallery(output_image)  # Update gallery with the new image
     return updated_gallery, seeds_string  # Return both the gallery and seed string
 
-def call_image_process(input_image, reference_image, age, gender, race, hair_length, manual_prompt, gptvision_prompt, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold, selected_tab):
+def call_image_process(input_image, reference_image, age, gender, race, hair_length, manual_prompt, gptvision_prompt, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold, selected_tab, enable_lcm):
     
     if is_wsl():
         seeds_string = 12567423
@@ -127,7 +141,6 @@ def call_image_process(input_image, reference_image, age, gender, race, hair_len
         gender_text = "person" if gender == "ambiguous" else gender
         formatted_prompt = manual_prompt.format(age=str(age), gender=gender_text, race=race, hair_length=hair_length) + ", " + prompt
     style_name = ""
-    enable_LCM = False
     enhance_face_region = True
 
     images = []
@@ -149,7 +162,7 @@ def call_image_process(input_image, reference_image, age, gender, race, hair_len
                 guidance_scale,
                 seed,
                 scheduler,
-                enable_LCM,
+                enable_lcm,
                 enhance_face_region)
         images.append(image) 
         seeds_used.append(seed_used)
@@ -197,7 +210,6 @@ def fast_unsharp_mask(image, sigma=1.2, strength=1.5, threshold=8):
 
 # Define input components
 MAX_SEED = np.iinfo(np.int32).max
-enable_lcm_arg = False
 
 with gr.Blocks() as demo:
     selected_tab = gr.State(2)  
@@ -249,19 +261,22 @@ with gr.Blocks() as demo:
                         label="Negative Prompt",
                         value="(low quality, worst quality, lowres, low resolution, pixelated, grainy, blurry, out of focus:1.2), (text, artifacts:1.2), cartoon, illustration, anime, deformed, distorted, unnatural, exaggerated, (harsh shadows, high contrast shadows, dramatic lighting, low key lighting, underexposed, moody lighting), dark face, (smiling, teeth:2)")
             with gr.Accordion(open=False, label="Advanced Options"):
+                enable_lcm = gr.Checkbox(label="Enable LCM", value=False, info="Enable LCM acceleration for faster generation")
                 num_steps = gr.Slider(
                         label="Number of sample steps",
+                        info="Number of steps to sample from the model. Higher values can improve quality but may take longer to generate. Use 30, or 10 if you enable LCM",
                         minimum=1,
                         maximum=100,
                         step=1,
-                        value=5 if enable_lcm_arg else 30
+                        value=30
                     )
                 guidance_scale = gr.Slider(
                         label="Guidance scale",
+                        info="Use 3.5, or 0.0 if you enable LCM",
                         minimum=0.1,
                         maximum=20.0,
                         step=0.1,
-                        value=0.0 if enable_lcm_arg else 3.5,
+                        value=3.5,
                     )
                 schedulers = [
                         "DEISMultistepScheduler",
@@ -353,7 +368,7 @@ with gr.Blocks() as demo:
     
     submit_btn.click(
         fn=process_and_update_gallery,
-        inputs=[input_image, reference_image, age, gender, race, hair_length, manual_prompt, gptvision_prompt, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold, selected_tab],
+        inputs=[input_image, reference_image, age, gender, race, hair_length, manual_prompt, gptvision_prompt, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold, selected_tab, enable_lcm],
         outputs=[previous_images, seeds_used]
     )
     
@@ -361,7 +376,8 @@ with gr.Blocks() as demo:
 
     tab1.select(lambda: 1, outputs=selected_tab)
     tab2.select(lambda: 2, outputs=selected_tab)
-    
+    enable_lcm.change(update_sliders, inputs=[enable_lcm, num_steps, guidance_scale], outputs=[num_steps, guidance_scale])
+
 if __name__ == "__main__":
     if is_wsl():
         demo.launch()
