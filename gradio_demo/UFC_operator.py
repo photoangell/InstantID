@@ -273,7 +273,7 @@ with gr.Blocks() as demo:
                 guidance_scale = gr.Slider(
                         label="Guidance scale",
                         info="Use 3.5, or 0.0 if you enable LCM",
-                        minimum=0.1,
+                        minimum=0.0,
                         maximum=20.0,
                         step=0.1,
                         value=3.5,
