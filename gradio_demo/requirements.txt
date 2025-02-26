@@ -15,3 +15,4 @@ insightface
 gradio
 controlnet_aux
 openai
+mediapipe
