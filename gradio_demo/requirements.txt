@@ -1,6 +1,6 @@
 diffusers==0.32.2
 torch==2.6.0
-torchvision==0.15.1
+torchvision
 transformers==4.37.1
 accelerate
 safetensors
