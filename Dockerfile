@@ -38,7 +38,7 @@ RUN git clone https://github.com/photoangell/InstantID.git \
     && if [ ! -e /usr/bin/pip ]; then ln -s /usr/bin/pip3 /usr/bin/pip; fi \
     && python3 -m pip install --upgrade pip \
     && pip install -r InstantID/gradio_demo/requirements.txt \
-    && pip install pickleshare flask flask-restx opencv-python openai \
+    #&& pip install pickleshare opencv-python openai \
     && pip cache purge
 
 # Expose the Jupyter, gradio and flask port

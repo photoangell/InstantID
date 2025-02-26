@@ -14,4 +14,4 @@ opencv-python
 insightface
 gradio
 controlnet_aux
-gdown
+openai
