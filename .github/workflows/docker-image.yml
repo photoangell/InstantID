@@ -51,7 +51,7 @@ jobs:
     - name: Build the Docker image
       run: |
         echo "Building the Docker image..."
-        docker buildx build . --file Dockerfile --platform linux/amd64 \
+        docker buildx build . --file Dockerfile --platform linux/amd64,linux/arm64 \
           --build-arg GIT_COMMIT=$(git rev-parse --short HEAD) \
           --build-arg VERSION_TAG=latest \
           --tag photoangell/ymbbt-faceclone-dev:${{ env.IMAGE_TAG }} \
