@@ -18,18 +18,21 @@ lcm_stored_values = {
     False: {"num_steps": 30, "guidance_scale": 3.5},  # Default values when LCM is disabled
 }
 
-def is_wsl():
-    if "microsoft" in platform.uname().release.lower():
+def check_platform():
+    release = platform.uname().release.lower()
+    if "microsoft" in release:
+        return True
+    if "rpi" in release or "+rpt" in release:
         return True
     return False
 
 pretrained_model_name_or_path = "wangqixun/YamerMIX_v8"
 
-if not is_wsl():
+if not check_platform():
     from modules.image_pipeline import initialize_pipeline, generate_image
     pipe = initialize_pipeline(pretrained_model_name_or_path)
 else:
-    print("Running on WSL; skipping image_pipeline imports.")
+    print("Running on WSL/Raspberry Pi; skipping image_pipeline imports.")
 
 sys.path.append('./')
 print('Pipeline building...')
@@ -131,7 +134,7 @@ def process_and_update_gallery(*args):
 
 def call_image_process(input_image, reference_image, age, gender, race, hair_length, manual_prompt, gptvision_prompt, prompt, negative_prompt, num_steps, guidance_scale, scheduler, identitynet_strength_ratio, adapter_strength_ratio, controlnet_selection, pose_strength, canny_strength, depth_strength, seed, sigma, strength, threshold, selected_tab, enable_lcm):
     
-    if is_wsl():
+    if check_platform():
         seeds_string = 12567423
         return input_image, seeds_string 
     
@@ -379,7 +382,7 @@ with gr.Blocks() as demo:
     enable_lcm.change(update_sliders, inputs=[enable_lcm, num_steps, guidance_scale], outputs=[num_steps, guidance_scale])
 
 if __name__ == "__main__":
-    if is_wsl():
+    if check_platform():
         demo.launch()
     else:
         demo.launch(share=True)
