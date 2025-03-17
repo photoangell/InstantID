@@ -50,6 +50,9 @@ RUN git clone https://github.com/photoangell/InstantID.git \
     #&& pip install pickleshare opencv-python openai \
     && pip cache purge
 
+# Make the startup script executable
+RUN chmod +x /workspace/InstantID/startup.sh
+
 # Expose the Jupyter, gradio and flask port
 EXPOSE 8080 7860 5000
 
