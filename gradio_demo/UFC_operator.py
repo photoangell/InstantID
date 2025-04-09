@@ -264,7 +264,7 @@ with gr.Blocks() as demo:
                         label="Negative Prompt",
                         value="(low quality, worst quality, lowres, low resolution, pixelated, grainy, blurry, out of focus:1.2), (text, artifacts:1.2), cartoon, illustration, anime, deformed, distorted, unnatural, exaggerated, (harsh shadows, high contrast shadows, dramatic lighting, low key lighting, underexposed, moody lighting), dark face, (smiling, teeth:2)")
             with gr.Accordion(open=False, label="Advanced Options"):
-                enable_lcm = gr.Checkbox(label="Enable LCM", value=False, info="Enable LCM acceleration for faster generation")
+                enable_lcm = gr.Checkbox(label="Enable LCM", value=True, info="Enable LCM acceleration for faster generation")
                 num_steps = gr.Slider(
                         label="Number of sample steps",
                         info="Number of steps to sample from the model. Higher values can improve quality but may take longer to generate. Use 30, or 10 if you enable LCM",
