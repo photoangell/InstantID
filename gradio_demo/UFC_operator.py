@@ -160,10 +160,32 @@ def analyze_image_with_gpt(image_path):
     )
 
     # prompt should be "[age] years old [race] [gender descriptor] MMA fighter, [head description]\n\n"
-    output = json.loads(response.output_text)
-    if output.get('refusal', False):
+    def extract_output_text(response):
+        """Safely extracts output text from a structured response."""
+        try:
+            return response.output[0].content[0].text
+        except (AttributeError, IndexError):
+            return None
+
+    def is_valid_json(text):
+        try:
+            json.loads(text)
+            return True
+        except (json.JSONDecodeError, TypeError):
+            return False
+
+    text = extract_output_text(response)
+
+    if text is None:
+        return "Sorry, no response content was found."
+
+    if not is_valid_json(text):
         return "Sorry, I cannot analyze this image."
-    
+
+    output = json.loads(text)
+    if output.get("refusal", False):  # Optional: if your schema includes an explicit refusal flag.
+        return "Sorry, I cannot analyze this image."
+
     prompt = f"{output['age']} years old {output['race']} {output['gender']} MMA fighter, {output['head_description']}"
     return prompt
 
