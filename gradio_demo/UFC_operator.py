@@ -9,6 +9,7 @@ from PIL import Image
 import platform
 import base64
 from openai import OpenAI
+from collections import defaultdict
 
 client = OpenAI()
 image_buffer = []
@@ -59,46 +60,112 @@ def analyze_image_with_gpt(image_path):
 
     base64_image = encode_image(image_path)
 
-    response = client.chat.completions.create(
+    response = client.responses.create(
         model="gpt-4o-mini", #    "gpt-4-turbo",
-        temperature=0.0,  # Reduce randomness for accuracy
-        top_p=0.1,  # Further controls randomness (optional)
-        max_tokens=100,  # Prevents excessive response length
-        messages=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
+        temperature=0.2,  # Reduce randomness for accuracy
+     #   top_p=0.1,  # Further controls randomness (optional)
+     #   max_output_tokens=100,  # Prevents excessive response length
+        input= [
+                {
+                    "role": "system",
+                    "content": [
+                        {
+                        "type": "instructions",
                         "text": (
-                            "Analyze the image and return a description in the exact following format:\n\n"
-                            "[age] years old [race] [gender descriptor] MMA fighter, [head description]\n\n"
-                            "Guidelines:\n"
-                            "- Replace [age] with the best guess in numbers.\n"
-                            "- Replace [race] with the most accurate ethnic descriptor based on facial features, skin tone, and hair type.\n"
-                            "  - Possible races: Caucasian, East Asian, South Asian, African, Hispanic, Middle Eastern, Native American, mixed race.\n"
-                            "- Do not assume race incorrectly; if uncertain, use 'ambiguous ethnicity'.\n"
-                            "- If gender is clear, use 'male' or 'female'. If ambiguous, use 'androgynous' or 'non-binary'.\n"
-                            "- For hair:\n"
-                            "  - If the person has visible hair, describe its length, texture, and color (e.g., 'short wavy brown hair').\n"
-                            "  - If the person is bald, replace '[head description]' with 'bald head'.\n"
-                            "  - If the person has a shaved head, use 'shaved head'.\n"
-                            "- If the head is covered (hat, hood, turban, hijab, helmet, etc.), describe the covering (e.g., 'wearing a black hijab').\n"
-                            "- Do not describe emotions, clothing (except head coverings), accessories, or background.\n"
-                            "- Keep the response short, structured, and natural for a Stable Diffusion prompt."
-                            "- Do not end with a full stop or punctuation."
+                            "You are an AI model designed to analyze images and provide descriptions."
+                            " Your task is to analyze a given image and describe the person depicted based on the following attributes:\n"
+                            "- Age: Estimate the person's age in numbers.\n"
+                            "- Race: Identify the most accurate ethnic descriptor based on facial features, skin tone, and hair type."
+                            " If unsure, use 'ambiguous ethnicity'.\n"
+                            "- Gender: Determine the most appropriate gender term based on appearance."
+                            " If gender is unclear, use a neutral or inclusive term.\n"
+                            "- Head Description:\n"
+                            "  - If uncovered and hair is visible, briefly describe the length, texture, and color (e.g., 'short wavy brown hair').\n"
+                            "  - If bald, state 'bald head'.\n"
+                            "  - If shaved, state 'shaved head'.\n"
+                            "  - If covered (hat, hood, turban, hijab, helmet, etc.), specify the covering by type and color (e.g., 'wearing a black hijab').\n"
+                            "- The response will be used to construct a Stable Diffusion prompt\n"
+                            "- Exclude emotions, clothing (except head coverings), accessories, and background details."
+                            "- Do not end with a full stop or punctuation.\n"
                         )
+                        }
+                    ],
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "input_text",
+                            "text": "Analyze the image and provide a structured description as specified."
+
+                            # "text": (
+                            #     "Analyze the image and return a description in the exact following format:\n\n"
+                            #     "[age] years old [race] [gender descriptor] MMA fighter, [head description]\n\n"
+                            #     "Guidelines:\n"
+                            #     "- Replace [age] with the best guess in numbers.\n"
+                            #     "- Replace [race] with the most accurate ethnic descriptor based on facial features, skin tone, and hair type.\n"
+                            #     "  - Possible races: Caucasian, East Asian, South Asian, African, Hispanic, Middle Eastern, Native American, mixed race.\n"
+                            #     "- Do not assume race incorrectly; if uncertain, use 'ambiguous ethnicity'.\n"
+                            #     "- If gender is clear, use 'male' or 'female'. If ambiguous, use 'androgynous' or 'non-binary'.\n"
+                            #     "- For hair:\n"
+                            #     "  - If the person has visible hair, describe its length, texture, and color (e.g., 'short wavy brown hair').\n"
+                            #     "  - If the person is bald, replace '[head description]' with 'bald head'.\n"
+                            #     "  - If the person has a shaved head, use 'shaved head'.\n"
+                            #     "- If the head is covered (hat, hood, turban, hijab, helmet, etc.), describe the covering (e.g., 'wearing a black hijab').\n"
+                            #     "- Do not describe emotions, clothing (except head coverings), accessories, or background.\n"
+                            #     "- Keep the response short, structured, and natural for a Stable Diffusion prompt."
+                            #     "- Do not end with a full stop or punctuation."
+                            # )
+                        },
+                        {
+                            "type": "input_image",
+                            "image_url": f"data:image/jpeg;base64,{base64_image}",
+                        },
+                    ],
+                },
+            ],
+        text = {
+            "format": {
+                "type": "json_schema",
+                "name": "image_analysis_description",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "age": {
+                            "type": "integer",
+                            "description": "The best guess of the age in numbers."
+                        },
+                        "race": {
+                            "type": "string",
+                            "description": "The most accurate ethnic descriptor based on facial features, skin tone, and hair type.",
+                        },
+                        "gender": {
+                            "type": "string",
+                            "description": "Indicates gender identity.",
+                        },
+                        "head_description": {
+                            "type": "string",
+                            "description": "Description of the head based on hair or head coverings."
+                        }
                     },
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
-                    },
-                ],
+                    "required": [
+                    "age",
+                    "race",
+                    "gender",
+                    "head_description"
+                    ],
+                    "additionalProperties": False
+                },
+                "strict": True
             }
-        ],
+        }
     )
 
-    return response.choices[0].message.content  # Extract and return GPT's response
+    # prompt should be "[age] years old [race] [gender descriptor] MMA fighter, [head description]\n\n"
+    output = json.loads(response.output_text)
+    if output.get('refusal', False):
+        return "Sorry, I cannot analyze this image."
+    
+    prompt = f"{output['age']} years old {output['race']} {output['gender']} MMA fighter, {output['head_description']}"
+    return prompt
 
 # Gradio Interface
 def update_sliders(enable_lcm, num_steps, guidance_scale):
