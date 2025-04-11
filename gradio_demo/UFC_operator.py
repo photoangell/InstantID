@@ -62,7 +62,7 @@ def analyze_image_with_gpt(image_path):
 
     response = client.responses.create(
         model="gpt-4o-mini", #    "gpt-4-turbo",
-        temperature=0.2,  # Reduce randomness for accuracy
+        temperature=0.4,  # Reduce randomness for accuracy
      #   top_p=0.1,  # Further controls randomness (optional)
      #   max_output_tokens=100,  # Prevents excessive response length
         input= [
@@ -84,9 +84,10 @@ def analyze_image_with_gpt(image_path):
                             "  - If bald, state 'bald head'.\n"
                             "  - If shaved, state 'shaved head'.\n"
                             "  - If covered (hat, hood, turban, hijab, helmet, etc.), specify the covering by type and color (e.g., 'wearing a black hijab').\n"
+                            "- Eye Colour: Describe the eye color (e.g., 'blue', 'brown', 'green').\n"
                             "- The response will be used to construct a Stable Diffusion prompt\n"
                             "- Exclude emotions, clothing (except head coverings), accessories, and background details."
-                            "- Do not end with a full stop or punctuation.\n"
+                            "- Do not use full stop, period or commas\n"
                         )
                         }
                     ],
@@ -144,13 +145,18 @@ def analyze_image_with_gpt(image_path):
                         "head_description": {
                             "type": "string",
                             "description": "Description of the head based on hair or head coverings."
+                        },
+                        "eye_colour": {
+                            "type": "string",
+                            "description": "Description of the eye color."                            
                         }
                     },
                     "required": [
                     "age",
                     "race",
                     "gender",
-                    "head_description"
+                    "head_description",
+                    "eye_colour"
                     ],
                     "additionalProperties": False
                 },
@@ -186,7 +192,7 @@ def analyze_image_with_gpt(image_path):
     if output.get("refusal", False):  # Optional: if your schema includes an explicit refusal flag.
         return "Sorry, I cannot analyze this image."
 
-    prompt = f"{output['age']} years old {output['race']} {output['gender']} MMA fighter, {output['head_description']}"
+    prompt = f"{output['age']} years old {output['race']} {output['gender']} MMA fighter, {output['eye_colour']} eyes, {output['head_description']}"
     return prompt
 
 # Gradio Interface
@@ -339,10 +345,11 @@ with gr.Blocks() as demo:
                     
                 with gr.Tab(label="GPT Vision Analysis", id=2) as tab2:
                     with gr.Row():
-                        gptvision_prompt = gr.Textbox(label="Person Description Prompt",
+                        gptvision_prompt = gr.Textbox( label="Person Description Prompt",
                                             info="eg 40 years old Caucasian male MMA fighter, short wavy brown hair",
                                             value="",
-                                            scale=4)
+                                            scale=4,
+                                            lines=2)
                         vision_analysis = gr.Button("Analyse Input Image", scale=1)
                 
             gr.Markdown("# Step 2a: Additional Prompts and Options")
