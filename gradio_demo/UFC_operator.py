@@ -360,7 +360,7 @@ with gr.Blocks() as demo:
                         minimum=1,
                         maximum=100,
                         step=1,
-                        value=30
+                        value=10
                     )
                 guidance_scale = gr.Slider(
                         label="Guidance scale",
@@ -368,7 +368,7 @@ with gr.Blocks() as demo:
                         minimum=0.0,
                         maximum=20.0,
                         step=0.1,
-                        value=3.5,
+                        value=0,
                     )
                 schedulers = [
                         "DEISMultistepScheduler",
