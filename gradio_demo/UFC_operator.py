@@ -79,12 +79,15 @@ def analyze_image_with_gpt(image_path):
                             " If unsure, use 'ambiguous ethnicity'.\n"
                             "- Gender: Determine the most appropriate gender term based on appearance."
                             " If gender is unclear, use a neutral or inclusive term.\n"
-                            "- Head Description:\n"
+                            "- Hair Description:\n"
                             "  - If uncovered and hair is visible, briefly describe the length, texture, and color (e.g., 'short wavy brown hair').\n"
                             "  - If bald, state 'bald head'.\n"
                             "  - If shaved, state 'shaved head'.\n"
                             "  - If covered (hat, hood, turban, hijab, helmet, etc.), specify the covering by type and color (e.g., 'wearing a black hijab').\n"
                             "- Eye Colour: Describe the eye color (e.g., 'blue', 'brown', 'green').\n"
+                            "- Face Description:\n",
+                            "  - Describe the face (e.g., 'oval face', 'strong jawline', 'freckles', 'big nose').\n"
+                            "  - DO NOT describe emotions or expressions (e.g., 'smiling', 'frowning', 'happy', 'neutral expression')\n"
                             "- The response will be used to construct a Stable Diffusion prompt\n"
                             "- Exclude emotions, clothing (except head coverings), accessories, and background details."
                             "- Do not use full stop, period or commas\n"
@@ -96,25 +99,6 @@ def analyze_image_with_gpt(image_path):
                         {
                             "type": "input_text",
                             "text": "Analyze the image and provide a structured description as specified."
-
-                            # "text": (
-                            #     "Analyze the image and return a description in the exact following format:\n\n"
-                            #     "[age] years old [race] [gender descriptor] MMA fighter, [head description]\n\n"
-                            #     "Guidelines:\n"
-                            #     "- Replace [age] with the best guess in numbers.\n"
-                            #     "- Replace [race] with the most accurate ethnic descriptor based on facial features, skin tone, and hair type.\n"
-                            #     "  - Possible races: Caucasian, East Asian, South Asian, African, Hispanic, Middle Eastern, Native American, mixed race.\n"
-                            #     "- Do not assume race incorrectly; if uncertain, use 'ambiguous ethnicity'.\n"
-                            #     "- If gender is clear, use 'male' or 'female'. If ambiguous, use 'androgynous' or 'non-binary'.\n"
-                            #     "- For hair:\n"
-                            #     "  - If the person has visible hair, describe its length, texture, and color (e.g., 'short wavy brown hair').\n"
-                            #     "  - If the person is bald, replace '[head description]' with 'bald head'.\n"
-                            #     "  - If the person has a shaved head, use 'shaved head'.\n"
-                            #     "- If the head is covered (hat, hood, turban, hijab, helmet, etc.), describe the covering (e.g., 'wearing a black hijab').\n"
-                            #     "- Do not describe emotions, clothing (except head coverings), accessories, or background.\n"
-                            #     "- Keep the response short, structured, and natural for a Stable Diffusion prompt."
-                            #     "- Do not end with a full stop or punctuation."
-                            # )
                         },
                         {
                             "type": "input_image",
@@ -142,22 +126,26 @@ def analyze_image_with_gpt(image_path):
                             "type": "string",
                             "description": "Indicates gender identity.",
                         },
-                        "head_description": {
+                        "hair_description": {
                             "type": "string",
                             "description": "Description of the head based on hair or head coverings."
                         },
                         "eye_colour": {
                             "type": "string",
                             "description": "Description of the eye color."                            
+                        },
+                        "face_description": {
+                            "type": "string",
+                            "description": "Describe the face structure only (e.g., face shape, jawline, nose size). DO NOT include emotion, expression, or makeup."
                         }
                     },
                     "required": [
                     "age",
                     "race",
                     "gender",
-                    "head_description",
+                    "hair_description",
                     "eye_colour",
-                    
+                    "face_description"                    
                     ],
                     "additionalProperties": False
                 },
@@ -193,7 +181,7 @@ def analyze_image_with_gpt(image_path):
     if output.get("refusal", False):  # Optional: if your schema includes an explicit refusal flag.
         return "Sorry, I cannot analyze this image."
 
-    prompt = f"({output['age']} years old {output['race']} {output['gender']} MMA fighter), {output['eye_colour']} eyes, ({output['head_description']})"
+    prompt = f"({output['age']} years old {output['race']} {output['gender']} MMA fighter), ({output['eye_colour']} eyes), ({output['face_description']}), ({output['hair_description']})"
     return prompt
 
 # Gradio Interface
@@ -477,6 +465,8 @@ with gr.Blocks() as demo:
     tab1.select(lambda: 1, outputs=selected_tab)
     tab2.select(lambda: 2, outputs=selected_tab)
     enable_lcm.change(update_sliders, inputs=[enable_lcm, num_steps, guidance_scale], outputs=[num_steps, guidance_scale])
+
+print('Pipeline built...')
 
 if __name__ == "__main__":
     if check_platform():
