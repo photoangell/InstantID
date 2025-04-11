@@ -156,7 +156,8 @@ def analyze_image_with_gpt(image_path):
                     "race",
                     "gender",
                     "head_description",
-                    "eye_colour"
+                    "eye_colour",
+                    
                     ],
                     "additionalProperties": False
                 },
@@ -192,7 +193,7 @@ def analyze_image_with_gpt(image_path):
     if output.get("refusal", False):  # Optional: if your schema includes an explicit refusal flag.
         return "Sorry, I cannot analyze this image."
 
-    prompt = f"{output['age']} years old {output['race']} {output['gender']} MMA fighter, {output['eye_colour']} eyes, {output['head_description']}"
+    prompt = f"({output['age']} years old {output['race']} {output['gender']} MMA fighter), {output['eye_colour']} eyes, ({output['head_description']})"
     return prompt
 
 # Gradio Interface
