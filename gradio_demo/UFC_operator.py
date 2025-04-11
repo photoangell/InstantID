@@ -71,26 +71,47 @@ def analyze_image_with_gpt(image_path):
                     "content": [
                         {
                         "type": "instructions",
-                        "text": (
-                            "You are an AI model designed to analyze images and provide descriptions."
-                            " Your task is to analyze a given image and describe the person depicted based on the following attributes:\n"
-                            "- Age: Estimate the person's age in numbers.\n"
-                            "- Race: Identify the most accurate ethnic descriptor based on facial features, skin tone, and hair type."
-                            " If unsure, use 'ambiguous ethnicity'.\n"
-                            "- Gender: Determine the most appropriate gender term based on appearance."
-                            " If gender is unclear, use a neutral or inclusive term.\n"
-                            "- Hair Description:\n"
-                            "  - If uncovered and hair is visible, briefly describe the length, texture, and color (e.g., 'short wavy brown hair').\n"
-                            "  - If bald, state 'bald head'.\n"
-                            "  - If shaved, state 'shaved head'.\n"
-                            "  - If covered (hat, hood, turban, hijab, helmet, etc.), specify the covering by type and color (e.g., 'wearing a black hijab').\n"
-                            "- Eye Colour: Describe the eye color (e.g., 'blue', 'brown', 'green').\n"
-                            "- Face Description:\n",
-                            "  - Describe the face (e.g., 'oval face', 'strong jawline', 'freckles', 'big nose').\n"
-                            "  - DO NOT describe emotions or expressions (e.g., 'smiling', 'frowning', 'happy', 'neutral expression')\n"
-                            "- The response will be used to construct a Stable Diffusion prompt\n"
-                            "- Exclude emotions, clothing (except head coverings), accessories, and background details."
-                            "- Do not use full stop, period or commas\n"
+                        # "text": (
+                        #     "You are an AI model designed to analyze images and provide descriptions."
+                        #     " Your task is to analyze a given image and describe the person depicted based on the following attributes:\n"
+                        #     "- Age: Estimate the person's age in numbers.\n"
+                        #     "- Race: Identify the most accurate ethnic descriptor based on facial features, skin tone, and hair type."
+                        #     " If unsure, use 'ambiguous ethnicity'.\n"
+                        #     "- Gender: Determine the most appropriate gender term based on appearance."
+                        #     " If gender is unclear, use a neutral or inclusive term.\n"
+                        #     "- Hair Description:\n"
+                        #     "  - If uncovered and hair is visible, briefly describe the length, texture, and color (e.g., 'short wavy brown hair').\n"
+                        #     "  - If bald, state 'bald head'.\n"
+                        #     "  - If shaved, state 'shaved head'.\n"
+                        #     "  - If covered (hat, hood, turban, hijab, helmet, etc.), specify the covering by type and color (e.g., 'wearing a black hijab').\n"
+                        #     "- Eye Colour: Describe the eye color (e.g., 'blue', 'brown', 'green').\n"
+                        #     "- Face Description:\n",
+                        #     "  - Describe the face (e.g., 'oval face', 'strong jawline', 'freckles', 'big nose').\n"
+                        #     "  - DO NOT describe emotions or expressions (e.g., 'smiling', 'frowning', 'happy', 'neutral expression')\n"
+                        #     "- The response will be used to construct a Stable Diffusion prompt\n"
+                        #     "- Exclude emotions, clothing (except head coverings), accessories, and background details."
+                        #     "- Do not use full stop, period or commas\n"
+                        # )
+                        "text":(
+                        "You are a highly precise visual analysis model."
+                        " Your task is to examine a human subject in an image and return ONLY objective traits relevant for prompt generation."
+                        "\n\n"
+                        "Describe the following attributes:\n"
+                        "- Age: numeric estimate (e.g., 32)\n"
+                        "- Race: based on facial features, skin tone, hair type\n"
+                        "- Gender: inferred from appearance; use neutral terms if unclear\n"
+                        "- Hair Description: visible hair (length, texture, color), or if covered, describe the covering\n"
+                        "- Eye Colour: iris color only\n"
+                        "- Face Description: describe structure and fixed features (e.g., 'broad nose', 'oval face')\n\n"
+                        "**IMPORTANT: STRICT EXCLUSION RULES**\n"
+                        "❌ DO NOT describe any of the following:\n"
+                        "- Emotions (e.g., smiling, neutral, angry)\n"
+                        "- Facial expressions of any kind\n"
+                        "- Makeup or cosmetic features (e.g., eyeliner, lipstick)\n"
+                        "- Clothing (except head coverings)\n"
+                        "- Background elements\n"
+                        "- Accessories (e.g., glasses, earrings)\n\n"
+                        "Final descriptions should be purely anatomical and structural."
                         )
                         }
                     ],
