@@ -61,7 +61,7 @@ def analyze_image_with_gpt(image_path):
     base64_image = encode_image(image_path)
 
     response = client.responses.create(
-        model="gpt-4o-mini", #    "gpt-4-turbo",
+        model="gpt-4.1-nano", #    "gpt-4-turbo",
         temperature=0.4,  # Reduce randomness for accuracy
      #   top_p=0.1,  # Further controls randomness (optional)
      #   max_output_tokens=100,  # Prevents excessive response length
